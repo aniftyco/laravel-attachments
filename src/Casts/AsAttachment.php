@@ -15,21 +15,21 @@ class AsAttachment implements CastsAttributes
       return null;
     }
 
-    $json = (array) json_decode($value);
+    $attachment = (array) json_decode($value);
 
-    if (empty($json)) {
+    if (empty($data)) {
       return null;
     }
 
-    return new Attachment(...$json);
+    return new Attachment(...$attachment);
   }
 
-  public function set(Model $model, string $key, mixed $value, array $attributes): ?string
+  public function set(Model $model, string $key, mixed $attachment, array $attributes): ?string
   {
-    if (!$value instanceof Attachment) {
+    if (!$attachment instanceof Attachment) {
       return null;
     }
 
-    return $value->toJson();
+    return $attachment->toJson();
   }
 }
