@@ -58,9 +58,7 @@
   },
   "extra": {
     "laravel": {
-      "providers": [
-        "NiftyCo\\Attachments\\ServiceProvider"
-      ]
+      "providers": []
     }
   },
   "config": {
