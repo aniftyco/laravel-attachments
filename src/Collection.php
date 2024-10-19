@@ -2,6 +2,7 @@
 
 namespace NiftyCo\Attachments;
 
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection as BaseCollection;
 
 /**
@@ -12,5 +13,10 @@ use Illuminate\Support\Collection as BaseCollection;
  */
 class Collection extends BaseCollection
 {
-  //
+  public function addFromFile(UploadedFile $uploadedFile, ?string $disk = 'public', ?string $folder = 'attachments'): static
+  {
+    $attachment = Attachment::fromFile($uploadedFile, $disk, $folder);
+
+    return $this->add($attachment);
+  }
 }
