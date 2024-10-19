@@ -33,6 +33,11 @@ class Attachment implements Jsonable, JsonSerializable
     $this->url = Storage::url($this->name);
   }
 
+  public function url($full = false): string
+  {
+    return $full ? url($this->url) : $this->url;
+  }
+
   public function toArray(): array
   {
     return [
