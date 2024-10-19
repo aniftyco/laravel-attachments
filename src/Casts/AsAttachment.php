@@ -17,7 +17,7 @@ class AsAttachment implements CastsAttributes
 
     $attachment = (array) json_decode($value);
 
-    if (empty($data)) {
+    if (empty($attachment)) {
       return null;
     }
 
