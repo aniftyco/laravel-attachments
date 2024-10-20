@@ -30,7 +30,7 @@ class Attachment implements Jsonable, JsonSerializable
     private ?string $extname,
     private ?string $mimeType,
   ) {
-    $this->url = Storage::url($this->name);
+    $this->url = Storage::disk($this->disk)->url($this->name);
   }
 
   public function url($full = false): string
