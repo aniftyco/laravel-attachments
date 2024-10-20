@@ -10,7 +10,7 @@
 You can install the package via Composer:
 
 ```sh
-composer require aniftyco/laravel-attachments
+composer require aniftyco/laravel-attachments:dev-master
 ```
 
 ## Usage
