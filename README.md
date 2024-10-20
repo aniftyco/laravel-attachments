@@ -50,9 +50,12 @@ use NiftyCo\Attachments\Casts\AsAttachment;
 
 class User extends Model
 {
-    protected $casts = [
-        'avatar' => AsAttachment::class,
-    ];
+    protected function casts(): array
+    {
+        return [
+            'avatar' => AsAttachment::class,
+        ];
+    }
 }
 ```
 
@@ -83,9 +86,12 @@ use NiftyCo\Attachments\Casts\AsAttachments;
 
 class Post extends Model
 {
-    protected $casts = [
-        'images' => AsAttachments::class,
-    ];
+    protected function casts(): array
+    {
+        return [
+            'images' => AsAttachments::class,
+        ];
+    }
 }
 ```
 
