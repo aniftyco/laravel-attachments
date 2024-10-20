@@ -21,21 +21,20 @@ Your migrations need to have a `Blueprint::jsonb()` column set on it.
 
 ```php
 return new class extends Migration {
-  /**
-   * Run the migrations.
-   */
-  public function up(): void
-  {
-    Schema::create('users', function (Blueprint $table) {
-        $table->id();
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
 
-        //...
+            //...
 
-        $table->jsonb('avatar')->nullable();
-    });
-  }
-}
-  //...
+            $table->jsonb('avatar')->nullable();
+        });
+    }
+};
 ```
 
 ### Adding Attachments to Models
