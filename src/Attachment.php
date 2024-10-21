@@ -11,8 +11,9 @@ class Attachment implements Jsonable, JsonSerializable
 {
   public string $url;
 
-  public static function fromFile(UploadedFile $file, ?string $disk = 'public', ?string $folder = 'attachments'): static
+  public static function fromFile(UploadedFile $file, ?string $disk = null, ?string $folder = 'attachments'): static
   {
+    $disk = $disk ?? config('filesystems.default');
 
     return new static(
       disk: $disk,

@@ -13,7 +13,7 @@ use Illuminate\Support\Collection as BaseCollection;
  */
 class Collection extends BaseCollection
 {
-  public function addFromFile(UploadedFile $uploadedFile, ?string $disk = 'public', ?string $folder = 'attachments'): static
+  public function addFromFile(UploadedFile $uploadedFile, ?string $disk = null, ?string $folder = 'attachments'): static
   {
     $attachment = Attachment::fromFile($uploadedFile, $disk, $folder);
 
