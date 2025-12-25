@@ -1,6 +1,6 @@
 # Attachments for Laravel
 
-> Turn any field on your Eloquent models into attachments with automatic file management, validation, and cleanup.
+> Turn any field on your Eloquent models into attachments with automatic file management and cleanup.
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/aniftyco/laravel-attachments.svg?style=flat-square)](https://packagist.org/packages/aniftyco/laravel-attachments)
 [![Total Downloads](https://img.shields.io/packagist/dt/aniftyco/laravel-attachments.svg?style=flat-square)](https://packagist.org/packages/aniftyco/laravel-attachments)
@@ -9,7 +9,6 @@
 
 - 🎯 **Simple API** - Easy-to-use casts for single and multiple attachments
 - 🔄 **Automatic Cleanup** - Automatically delete files when models are deleted
-- ✅ **File Validation** - Built-in validation for file size, type, and extensions
 - 🔗 **URL Generation** - Generate public and temporary URLs for attachments
 - 📦 **Multiple Storage Disks** - Support for any Laravel filesystem disk
 - 🗂️ **Organized Storage** - Automatic folder organization with customizable paths
@@ -148,49 +147,6 @@ class PostController
     }
 }
 ```
-
-### File Validation
-
-You can validate files during upload by passing validation rules:
-
-```php
-use NiftyCo\Attachments\Attachment;
-use Illuminate\Validation\Rules\File;
-
-// Single attachment with validation
-$user->avatar = Attachment::fromFile(
-    $request->file('avatar'),
-    folder: 'avatars',
-    validate: ['image', 'max:2048', 'mimes:jpg,png']
-);
-
-// Multiple attachments with validation
-$post->images = Attachments::fromFiles(
-    $request->file('images'),
-    folder: 'posts',
-    validate: ['image', 'max:5120']
-);
-
-// Programmatic validation (Laravel 11+)
-$user->avatar = Attachment::fromFile(
-    $request->file('avatar'),
-    folder: 'avatars',
-    validate: File::image()->max(2048)
-);
-```
-
-Validation rules can be:
-
-- **Array format**: `['image', 'max:2048', 'mimes:jpg,png']`
-- **String format**: `'image|max:2048|mimes:jpg,png'`
-- **Programmatic**: `File::image()->max(2048)` or `AttachmentRule::make()->images()->maxSizeMb(2)`
-
-Common validation rules:
-
-- `image` - Must be an image (jpeg, png, bmp, gif, svg, or webp)
-- `max:2048` - Maximum file size in kilobytes
-- `mimes:jpg,png,pdf` - Allowed file extensions
-- `mimetypes:image/jpeg,image/png` - Allowed MIME types
 
 ### Working with Attachments
 
