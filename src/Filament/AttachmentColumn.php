@@ -10,7 +10,7 @@ class AttachmentColumn extends ImageColumn
     /**
      * Configure the column to display an attachment.
      */
-    public static function make(string $name): static
+    public static function make(?string $name = null): static
     {
         return parent::make($name)
             ->getStateUsing(function ($record) use ($name) {
@@ -43,7 +43,7 @@ class AttachmentColumn extends ImageColumn
             $attachment = data_get($record, $this->getName());
 
             if ($attachment instanceof Attachment) {
-                return $attachment->name;
+                return $attachment->path();
             }
 
             return null;
