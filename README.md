@@ -179,13 +179,15 @@ Common validation rules:
 ```php
 $attachment = $user->avatar;
 
-$attachment->name;      // File name
-$attachment->disk;      // Storage disk name
-$attachment->folder;    // Folder path
-$attachment->path();    // Full path (folder/name)
-$attachment->size;      // File size in bytes
-$attachment->mime;      // MIME type
-$attachment->url;       // Public URL
+$attachment->name();      // File name
+$attachment->disk();      // Storage disk name
+$attachment->folder();    // Folder path
+$attachment->path();      // Full path (folder/name) - alias for name()
+$attachment->size();      // File size in bytes
+$attachment->mimeType();  // MIME type
+$attachment->extname();   // File extension (e.g., 'jpg')
+$attachment->extension(); // Alias for extname()
+$attachment->url();       // Public URL
 ```
 
 #### Generating URLs
@@ -231,14 +233,14 @@ $count = $post->images->count();
 
 // Loop through attachments
 foreach ($post->images as $image) {
-    echo $image->url;
+    echo $image->url();
 }
 
 // Add a new attachment
 $post->images->addFromFile($file, folder: 'posts');
 
 // Remove an attachment
-$post->images = $post->images->filter(fn($img) => $img->name !== 'old.jpg');
+$post->images = $post->images->filter(fn($img) => $img->name() !== 'old.jpg');
 $post->save();
 ```
 
