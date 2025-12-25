@@ -14,10 +14,4 @@ abstract class TestCase extends Testbench\TestCase
             Fixtures\ServiceProvider::class,
         ];
     }
-
-    protected function defineEnvironment($app)
-    {
-        // Disable validation for tests to allow any file type
-        $app['config']->set('attachments.validation', []);
-    }
 }
