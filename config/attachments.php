@@ -55,38 +55,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | File Validation Rules
-    |--------------------------------------------------------------------------
-    |
-    | Define Laravel validation rules for uploaded files. These rules will be
-    | applied when using Attachment::fromFile() or Collection::addFromFile().
-    |
-    | You can use any Laravel file validation rules:
-    | - 'file' - Must be a successfully uploaded file
-    | - 'image' - Must be an image (jpeg, png, bmp, gif, svg, or webp)
-    | - 'mimes:jpg,png,pdf' - File must have a MIME type corresponding to extensions
-    | - 'mimetypes:image/jpeg,image/png' - File must match given MIME types
-    | - 'max:10240' - File size must be less than or equal to 10240 kilobytes
-    | - 'min:100' - File size must be at least 100 kilobytes
-    | - 'dimensions:min_width=100,min_height=100' - Image dimensions constraints
-    |
-    | You can specify rules as an array or a pipe-separated string.
-    | Set to null or empty array to disable validation.
-    |
-    | Examples:
-    | - ['required', 'file', 'image', 'max:2048', 'mimes:jpg,png']
-    | - 'required|file|image|max:2048|mimes:jpg,png'
-    |
-    */
-
-    'validation' => [
-        'file',
-        'max:10240', // 10MB
-        'mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,zip,rar',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | File Naming Strategy
     |--------------------------------------------------------------------------
     |
