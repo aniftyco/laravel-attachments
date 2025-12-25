@@ -75,17 +75,6 @@ $post->images->attach($request->file('new_image'), folder: 'posts');
 $post->save();
 ```
 
-### With Validation
-
-```php
-$post->images = Attachments::fromFiles(
-    $request->file('images'),
-    folder: 'posts',
-    validate: ['image', 'max:5120', 'mimes:jpg,png']
-);
-$post->save();
-```
-
 ## Using the HasAttachments Trait
 
 ```php
