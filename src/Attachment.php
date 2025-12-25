@@ -120,11 +120,45 @@ class Attachment implements Jsonable, JsonSerializable
     }
 
     /**
+     * Alias for path() for backwards compatibility.
+     *
+     * @deprecated Use path() instead
+     */
+    public function name(): ?string
+    {
+        return $this->path();
+    }
+
+    /**
      * Get the file extension.
      */
     public function extension(): ?string
     {
         return $this->extname;
+    }
+
+    /**
+     * Alias for extension() for backwards compatibility.
+     *
+     * @deprecated Use extension() instead
+     */
+    public function extname(): ?string
+    {
+        return $this->extension();
+    }
+
+    /**
+     * Get the folder/directory path.
+     */
+    public function folder(): ?string
+    {
+        if ($this->name === null) {
+            return null;
+        }
+
+        $folder = dirname($this->name);
+
+        return $folder === '.' ? null : $folder;
     }
 
     /**
