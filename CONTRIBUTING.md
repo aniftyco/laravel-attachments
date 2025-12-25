@@ -78,13 +78,17 @@ composer lint
 Example test structure:
 
 ```php
-it('validates file size when uploading attachment', function () {
+it('can create an attachment from an uploaded file', function () {
     // Arrange
-    $file = UploadedFile::fake()->image('large.jpg')->size(3000);
-    
-    // Act & Assert
-    expect(fn() => Attachment::fromFile($file, validate: ['max:2048']))
-        ->toThrow(ValidationException::class);
+    Storage::fake('public');
+    $file = UploadedFile::fake()->image('test.jpg');
+
+    // Act
+    $attachment = Attachment::fromFile($file, 'public', 'uploads');
+
+    // Assert
+    expect($attachment)->toBeInstanceOf(Attachment::class);
+    expect($attachment->exists())->toBeTrue();
 });
 ```
 
@@ -101,4 +105,3 @@ If you have questions about contributing, feel free to open an issue or reach ou
 ## License
 
 By contributing to Laravel Attachments, you agree that your contributions will be licensed under the MIT License.
-
