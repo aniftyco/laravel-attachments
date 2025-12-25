@@ -150,7 +150,7 @@ foreach ($post->images as $image) {
 $images = $post->images->filter(fn($file) => $file->isImage());
 
 // Get files larger than 1MB
-$large = $post->images->filter(fn($file) => $file->size > 1048576);
+$large = $post->images->filter(fn($file) => $file->size() > 1048576);
 
 // Get PDFs
 $pdfs = $post->images->filter(fn($file) => $file->isPdf());
@@ -160,20 +160,20 @@ $pdfs = $post->images->filter(fn($file) => $file->isPdf());
 
 ```php
 // Get all URLs
-$urls = $post->images->map(fn($image) => $image->url);
+$urls = $post->images->map(fn($image) => $image->url());
 
 // Get all file names
-$names = $post->images->map(fn($image) => $image->name);
+$names = $post->images->map(fn($image) => $image->name());
 ```
 
 ### Sorting Attachments
 
 ```php
 // Sort by size
-$sorted = $post->images->sortBy('size');
+$sorted = $post->images->sortBy(fn($img) => $img->size());
 
 // Sort by name
-$sorted = $post->images->sortBy('name');
+$sorted = $post->images->sortBy(fn($img) => $img->name());
 ```
 
 ## Collection Operations
@@ -184,7 +184,7 @@ Get the total size of all attachments:
 
 ```php
 $totalBytes = $post->images->totalSize();
-$totalReadable = $post->images->readableSize(); // "15.3 MB"
+$totalReadable = $post->images->totalReadableSize(); // "15.3 MB"
 ```
 
 ### Filter by Type
@@ -238,7 +238,7 @@ $post->images->archive('post-images.zip');
 ### Remove by Name
 
 ```php
-$post->images = $post->images->filter(fn($img) => $img->name !== 'old.jpg');
+$post->images = $post->images->filter(fn($img) => $img->name() !== 'old.jpg');
 $post->save();
 ```
 
@@ -254,7 +254,7 @@ $post->save();
 ```php
 $namesToRemove = ['photo1.jpg', 'photo2.jpg'];
 $post->images = $post->images->filter(
-    fn($img) => !in_array($img->name, $namesToRemove)
+    fn($img) => !in_array($img->name(), $namesToRemove)
 );
 $post->save();
 ```
@@ -272,7 +272,7 @@ $last = $post->images->last();
 $second = $post->images->get(1);
 
 // Find by name
-$specific = $post->images->first(fn($img) => $img->name === 'photo.jpg');
+$specific = $post->images->first(fn($img) => $img->name() === 'photo.jpg');
 ```
 
 ## Checking for Attachments
@@ -289,7 +289,7 @@ if ($post->images->isNotEmpty()) {
 }
 
 // Check if specific file exists
-$hasPhoto = $post->images->contains(fn($img) => $img->name === 'photo.jpg');
+$hasPhoto = $post->images->contains(fn($img) => $img->name() === 'photo.jpg');
 ```
 
 ## Next Steps

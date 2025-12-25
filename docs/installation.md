@@ -4,8 +4,8 @@
 
 Before installing Laravel Attachments, ensure your system meets the following requirements:
 
-- PHP 8.1 or higher
-- Laravel 11.0 or 12.0
+- PHP 8.3 or higher
+- Laravel 12.0 or higher
 - A configured filesystem disk (local, public, S3, etc.)
 
 ## Installing via Composer
@@ -99,12 +99,12 @@ $user->save();
 
 ```php
 // Get the URL
-echo $user->avatar->url;
+echo $user->avatar->url();
 
 // Get file information
-echo $user->avatar->name;
-echo $user->avatar->size;
-echo $user->avatar->mime;
+echo $user->avatar->name();
+echo $user->avatar->size();
+echo $user->avatar->mimeType();
 echo $user->avatar->readableSize(); // "1.5 MB"
 ```
 

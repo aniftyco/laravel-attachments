@@ -128,13 +128,13 @@ $user->save();
 $avatar = $user->avatar;
 
 // Basic properties
-$avatar->name;      // File name (e.g., "abc123.jpg")
-$avatar->disk;      // Storage disk (e.g., "public")
-$avatar->folder;    // Folder path (e.g., "avatars")
-$avatar->path();    // Full path (e.g., "avatars/abc123.jpg")
-$avatar->size;      // File size in bytes
-$avatar->mime;      // MIME type (e.g., "image/jpeg")
-$avatar->extname;   // File extension (e.g., "jpg")
+$avatar->name();      // File name (e.g., "abc123.jpg")
+$avatar->disk();      // Storage disk (e.g., "public")
+$avatar->folder();    // Folder path (e.g., "avatars")
+$avatar->path();      // Full path (e.g., "avatars/abc123.jpg")
+$avatar->size();      // File size in bytes
+$avatar->mimeType();  // MIME type (e.g., "image/jpeg")
+$avatar->extname();   // File extension (e.g., "jpg")
 
 // URLs
 $avatar->url;       // Public URL

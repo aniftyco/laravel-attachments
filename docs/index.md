@@ -68,7 +68,7 @@ $user->save();
 Access the attachment:
 
 ```php
-echo $user->avatar->url;
+echo $user->avatar->url();
 echo $user->avatar->readableSize();
 ```
 

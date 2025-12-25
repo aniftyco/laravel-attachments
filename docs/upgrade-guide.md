@@ -27,6 +27,7 @@ There are **no breaking changes** from pre-release versions. All existing code w
 #### Blueprint Macros
 
 **Before:**
+
 ```php
 Schema::create('users', function (Blueprint $table) {
     $table->jsonb('avatar')->nullable();
@@ -34,6 +35,7 @@ Schema::create('users', function (Blueprint $table) {
 ```
 
 **After (recommended):**
+
 ```php
 Schema::create('users', function (Blueprint $table) {
     $table->attachment('avatar');
@@ -43,13 +45,14 @@ Schema::create('users', function (Blueprint $table) {
 #### HasAttachments Trait
 
 **New feature:**
+
 ```php
 use NiftyCo\Attachments\Concerns\HasAttachments;
 
 class User extends Model
 {
     use HasAttachments;
-    
+
     protected function casts(): array
     {
         return [
@@ -66,6 +69,7 @@ $user->clearAttachments('avatar', deleteFiles: true);
 #### Collection Operations
 
 **New feature:**
+
 ```php
 // Delete all attachments
 $post->images->delete();
@@ -89,13 +93,14 @@ $images = $post->images->ofType('image');
 #### Testing Helpers
 
 **New feature:**
+
 ```php
 use NiftyCo\Attachments\Testing\InteractsWithAttachments;
 
 class UserTest extends TestCase
 {
     use InteractsWithAttachments;
-    
+
     public function test_upload()
     {
         $attachment = $this->createFakeAttachment('image');
@@ -107,6 +112,7 @@ class UserTest extends TestCase
 #### API Resources
 
 **New feature:**
+
 ```php
 use NiftyCo\Attachments\Http\Resources\AttachmentResource;
 
@@ -116,6 +122,7 @@ return new AttachmentResource($user->avatar);
 #### Filament Integration
 
 **New feature:**
+
 ```php
 use NiftyCo\Attachments\Filament\AttachmentField;
 use NiftyCo\Attachments\Filament\AttachmentColumn;
@@ -123,24 +130,6 @@ use NiftyCo\Attachments\Filament\AttachmentColumn;
 AttachmentField::make('avatar')->images();
 AttachmentColumn::make('avatar')->circular();
 ```
-
-### Deprecations
-
-#### `addFromFile()` Method
-
-The `addFromFile()` method on `Attachments` collection is deprecated in favor of `attach()`:
-
-**Before:**
-```php
-$post->images->addFromFile($file, folder: 'posts');
-```
-
-**After:**
-```php
-$post->images->attach($file, folder: 'posts');
-```
-
-**Note:** `addFromFile()` still works but will be removed in version 2.0.
 
 ### Recommended Updates
 
@@ -171,19 +160,7 @@ class User extends Model
 }
 ```
 
-#### 3. Update Collection Method Calls
-
-Replace `addFromFile()` with `attach()`:
-
-```php
-// Old
-$post->images->addFromFile($file, folder: 'posts');
-
-// New
-$post->images->attach($file, folder: 'posts');
-```
-
-#### 4. Add Testing Trait
+#### 3. Add Testing Trait
 
 In your test classes:
 
@@ -210,9 +187,9 @@ No database migrations are required. The package continues to use JSON columns f
 
 Potential breaking changes in version 2.0:
 
-- Removal of deprecated `addFromFile()` method
-- Minimum PHP version may increase to 8.2
-- Minimum Laravel version may increase to 12.0
+- Minimum PHP version may increase to 8.4
+- Minimum Laravel version may increase to 13.0
+- Additional API improvements and optimizations
 
 We will provide advance notice and a detailed upgrade guide when version 2.0 is released.
 
@@ -235,4 +212,3 @@ If you find a bug or issue during the upgrade:
    - Package version
    - Steps to reproduce
    - Expected vs actual behavior
-

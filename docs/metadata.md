@@ -5,6 +5,7 @@ Metadata allows you to store additional information about your attachments beyon
 ## What is Metadata?
 
 Metadata is custom data stored alongside your attachment information. It can include:
+
 - Original filename
 - Upload timestamp
 - User who uploaded the file
@@ -22,7 +23,7 @@ Metadata is enabled by default. Configure it in your config file:
 return [
     'metadata' => [
         'enabled' => true,
-        
+
         'auto_capture' => [
             'original_name' => true,
             'uploaded_at' => true,
@@ -199,7 +200,7 @@ $attachment->setMetadata('related_to', [
 
 // Store version information
 $attachment->setMetadata('version', '2.0');
-$attachment->setMetadata('replaces', $oldAttachment->name);
+$attachment->setMetadata('replaces', $oldAttachment->name());
 ```
 
 ## Metadata in Collections
@@ -254,20 +255,20 @@ Response includes metadata:
 
 ```json
 {
-    "id": 1,
-    "title": "Financial Report",
-    "attachment": {
-        "url": "https://example.com/storage/docs/abc123.pdf",
-        "name": "abc123.pdf",
-        "size": 1048576,
-        "mime": "application/pdf",
-        "metadata": {
-            "original_name": "Q4-Report.pdf",
-            "uploaded_at": "2024-01-15T10:30:00Z",
-            "description": "Q4 Financial Report",
-            "category": "financial"
-        }
+  "id": 1,
+  "title": "Financial Report",
+  "attachment": {
+    "url": "https://example.com/storage/docs/abc123.pdf",
+    "name": "abc123.pdf",
+    "size": 1048576,
+    "mime": "application/pdf",
+    "metadata": {
+      "original_name": "Q4-Report.pdf",
+      "uploaded_at": "2024-01-15T10:30:00Z",
+      "description": "Q4 Financial Report",
+      "category": "financial"
     }
+  }
 }
 ```
 
@@ -336,4 +337,3 @@ $attachment->setMetadata('uploaded_at', now()->format('Y-m-d H:i:s'));
 - Learn about [Events](events.md)
 - Explore [API Resources](api-resources.md)
 - Configure [Storage](storage.md)
-

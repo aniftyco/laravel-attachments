@@ -38,9 +38,12 @@ php artisan vendor:publish --tag=attachments-config
 
 ### Migrations
 
-Your migrations need to have a `Blueprint::jsonb()` column set on it.
+Add attachment columns to your migrations using the provided Blueprint macros:
 
 ```php
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
 return new class extends Migration {
     /**
      * Run the migrations.
@@ -49,14 +52,22 @@ return new class extends Migration {
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
+            $table->string('email')->unique();
 
-            //...
+            // Single attachment
+            $table->attachment('avatar');
 
-            $table->jsonb('avatar')->nullable();
+            // Multiple attachments
+            $table->attachments('photos');
+
+            $table->timestamps();
         });
     }
 };
 ```
+
+The `attachment()` and `attachments()` macros automatically create nullable JSON columns for storing attachment data.
 
 ### Adding Attachments to Models
 
@@ -130,7 +141,7 @@ class PostController
 
         // Or add files one at a time
         foreach ($request->file('images') as $image) {
-            $post->images->addFromFile($image, folder: 'posts');
+            $post->images->attach($image, folder: 'posts');
         }
 
         $post->save();
@@ -237,7 +248,7 @@ foreach ($post->images as $image) {
 }
 
 // Add a new attachment
-$post->images->addFromFile($file, folder: 'posts');
+$post->images->attach($file, folder: 'posts');
 
 // Remove an attachment
 $post->images = $post->images->filter(fn($img) => $img->name() !== 'old.jpg');

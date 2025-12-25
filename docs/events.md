@@ -73,22 +73,22 @@ class ProcessUploadedImage implements ShouldQueue
     public function handle(AttachmentCreated $event): void
     {
         $attachment = $event->attachment;
-        
+
         // Only process images
         if (!$attachment->isImage()) {
             return;
         }
-        
+
         // Process the image
         $this->createThumbnail($attachment);
         $this->optimizeImage($attachment);
     }
-    
+
     private function createThumbnail($attachment): void
     {
         // Create thumbnail logic
     }
-    
+
     private function optimizeImage($attachment): void
     {
         // Optimize image logic
@@ -135,26 +135,26 @@ class ProcessUploadedImage
     public function handle(AttachmentCreated $event): void
     {
         $attachment = $event->attachment;
-        
+
         if (!$attachment->isImage()) {
             return;
         }
-        
-        $disk = Storage::disk($attachment->disk);
+
+        $disk = Storage::disk($attachment->disk());
         $path = $attachment->path();
-        
+
         // Create thumbnail
         $image = Image::make($disk->get($path));
         $thumbnail = $image->fit(200, 200);
-        
+
         $thumbnailPath = str_replace(
-            $attachment->name,
-            'thumbnails/' . $attachment->name,
+            $attachment->name(),
+            'thumbnails/' . $attachment->name(),
             $path
         );
-        
+
         $disk->put($thumbnailPath, $thumbnail->encode());
-        
+
         // Store thumbnail path in metadata
         $attachment->setMetadata('thumbnail', $thumbnailPath);
     }
@@ -176,28 +176,28 @@ class ScanUploadedFile
     public function __construct(
         private VirusScanner $scanner
     ) {}
-    
+
     public function handle(AttachmentCreated $event): void
     {
         $attachment = $event->attachment;
-        
+
         $result = $this->scanner->scan(
             Storage::disk($attachment->disk)->path($attachment->name)
         );
-        
+
         if ($result->isInfected()) {
             // Delete infected file
             $attachment->delete();
-            
+
             // Log the incident
             logger()->warning('Infected file detected', [
                 'file' => $attachment->name,
                 'virus' => $result->virusName(),
             ]);
-            
+
             throw new \Exception('File is infected with malware');
         }
-        
+
         // Mark as scanned
         $attachment->setMetadata('scanned', true);
         $attachment->setMetadata('scanned_at', now()->toIso8601String());
@@ -227,7 +227,7 @@ class LogAttachmentOperations
             'user' => auth()->id(),
         ]);
     }
-    
+
     public function handleDeleted(AttachmentDeleted $event): void
     {
         Log::info('Attachment deleted', [
@@ -266,11 +266,11 @@ class NotifyFileUpload
     public function handle(AttachmentCreated $event): void
     {
         $user = auth()->user();
-        
+
         if (!$user) {
             return;
         }
-        
+
         $user->notify(new FileUploadedNotification($event->attachment));
     }
 }
@@ -290,7 +290,7 @@ class BackupAttachment
     public function handle(AttachmentCreated $event): void
     {
         $attachment = $event->attachment;
-        
+
         // Copy to backup disk
         $attachment->copy('s3-backup', 'backups/' . now()->format('Y/m'));
     }
@@ -347,7 +347,7 @@ use NiftyCo\Attachments\Events\AttachmentCreated;
 class ProcessUploadedImage implements ShouldQueue
 {
     public $queue = 'image-processing';
-    
+
     public function handle(AttachmentCreated $event): void
     {
         // Time-consuming image processing
@@ -399,4 +399,3 @@ class ProcessUploadedFile { }
 - Learn about [Testing](testing.md)
 - Explore [API Resources](api-resources.md)
 - Configure [Metadata](metadata.md)
-

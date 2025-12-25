@@ -42,6 +42,7 @@ $user->delete(); // Avatar file is automatically deleted from storage
 ### How It Works
 
 The trait registers a model observer that:
+
 1. Detects when a model is being deleted
 2. Finds all attachment attributes (using casts)
 3. Deletes the associated files from storage
@@ -126,7 +127,7 @@ If you want cleanup disabled for a specific model, don't add the trait:
 class User extends Model
 {
     // No HasAttachmentCleanup trait
-    
+
     protected function casts(): array
     {
         return [
@@ -185,7 +186,7 @@ $post->images = Attachments::fromFiles($newFiles, folder: 'posts');
 $post->save();
 
 // Remove specific files
-$post->images = $post->images->filter(fn($img) => $img->name !== 'old.jpg');
+$post->images = $post->images->filter(fn($img) => $img->name() !== 'old.jpg');
 $post->save();
 ```
 
@@ -252,11 +253,13 @@ class User extends Model
 ```
 
 **Pros:**
+
 - No manual cleanup needed
 - Prevents orphaned files
 - Works automatically
 
 **Cons:**
+
 - Files are permanently deleted
 - No recovery after deletion
 
@@ -272,11 +275,13 @@ class User extends Model
 ```
 
 **Pros:**
+
 - Full control over file deletion
 - Can implement custom cleanup logic
 - Files preserved after model deletion
 
 **Cons:**
+
 - Must manually delete files
 - Risk of orphaned files
 - Requires cleanup jobs/commands
@@ -351,9 +356,9 @@ public function test_avatar_deleted_with_user()
     $user->save();
 
     $path = $user->avatar->path();
-    
+
     $user->delete();
-    
+
     $this->assertFalse(Storage::disk('public')->exists($path));
 }
 ```
@@ -371,4 +376,3 @@ $user->delete();
 - Learn about [Events](events.md)
 - Explore [Testing](testing.md)
 - Configure [Storage](storage.md)
-

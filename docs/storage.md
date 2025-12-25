@@ -71,6 +71,7 @@ php artisan storage:link
 #### Other Cloud Storage
 
 Laravel supports many cloud storage providers:
+
 - DigitalOcean Spaces
 - Google Cloud Storage
 - Azure Blob Storage
@@ -291,7 +292,7 @@ if ($user->avatar->exists()) {
 ### Get File Size
 
 ```php
-$bytes = $user->avatar->size;
+$bytes = $user->avatar->size();
 $readable = $user->avatar->readableSize(); // "1.5 MB"
 ```
 
@@ -299,7 +300,7 @@ $readable = $user->avatar->readableSize(); // "1.5 MB"
 
 ```php
 $path = $user->avatar->path(); // "avatars/abc123.jpg"
-$disk = $user->avatar->disk;   // "public"
+$disk = $user->avatar->disk();   // "public"
 ```
 
 ## Next Steps
@@ -307,4 +308,3 @@ $disk = $user->avatar->disk;   // "public"
 - Learn about [URL Generation](urls.md)
 - Configure [Automatic Cleanup](cleanup.md)
 - Explore [Metadata](metadata.md)
-

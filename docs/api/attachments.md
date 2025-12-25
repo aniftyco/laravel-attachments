@@ -26,6 +26,7 @@ public static function fromFiles(
 ```
 
 **Parameters:**
+
 - `$files` - Array of `UploadedFile` instances
 - `$disk` - Storage disk (defaults to config value)
 - `$folder` - Folder path (defaults to config value)
@@ -34,10 +35,12 @@ public static function fromFiles(
 **Returns:** `Attachments` collection instance
 
 **Throws:**
+
 - `ValidationException` - If any file fails validation
 - `StorageException` - If file storage fails
 
 **Example:**
+
 ```php
 $attachments = Attachments::fromFiles(
     $request->file('images'),
@@ -63,6 +66,7 @@ public function attach(
 ```
 
 **Parameters:**
+
 - `$file` - The uploaded file instance
 - `$disk` - Storage disk
 - `$folder` - Folder path
@@ -71,26 +75,12 @@ public function attach(
 **Returns:** `$this` for chaining
 
 **Example:**
+
 ```php
 $attachments = new Attachments();
 $attachments->attach($file1, folder: 'posts');
 $attachments->attach($file2, folder: 'posts');
 ```
-
-### `addFromFile()` (Deprecated)
-
-Alias for `attach()`. Use `attach()` instead.
-
-```php
-public function addFromFile(
-    UploadedFile $file,
-    ?string $disk = null,
-    ?string $folder = null,
-    array|string|null $validate = null
-): static
-```
-
-**Note:** This method is deprecated and will be removed in version 2.0.
 
 ## Collection Operations
 
@@ -105,6 +95,7 @@ public function delete(): bool
 **Returns:** `true` if all files deleted successfully
 
 **Example:**
+
 ```php
 $post->images->delete();
 ```
@@ -118,12 +109,14 @@ public function move(?string $disk = null, ?string $folder = null): static
 ```
 
 **Parameters:**
+
 - `$disk` - Target disk (null to keep current)
 - `$folder` - Target folder (null to keep current)
 
 **Returns:** New `Attachments` collection with moved files
 
 **Example:**
+
 ```php
 $movedImages = $post->images->move('s3', 'archived-posts');
 ```
@@ -137,12 +130,14 @@ public function copy(?string $disk = null, ?string $folder = null): static
 ```
 
 **Parameters:**
+
 - `$disk` - Target disk
 - `$folder` - Target folder
 
 **Returns:** New `Attachments` collection with copied files
 
 **Example:**
+
 ```php
 $backups = $post->images->copy('backup', 'backups/posts');
 ```
@@ -152,18 +147,22 @@ $backups = $post->images->copy('backup', 'backups/posts');
 Create a ZIP archive of all attachments.
 
 ```php
-public function archive(string $filename, ?string $disk = null): string
+public function archive(string $archiveName, ?string $disk = null, ?string $folder = null): Attachment
 ```
 
 **Parameters:**
-- `$filename` - Name of the ZIP file
-- `$disk` - Disk to store the archive (defaults to first attachment's disk)
 
-**Returns:** Path to the created archive
+- `$archiveName` - Name of the ZIP file
+- `$disk` - Disk to store the archive (defaults to first attachment's disk)
+- `$folder` - Folder to store the archive (defaults to 'archives')
+
+**Returns:** `Attachment` instance of the created archive
 
 **Example:**
+
 ```php
-$archivePath = $post->images->archive('post-images.zip');
+$archive = $post->images->archive('post-images.zip');
+echo $archive->url(); // URL to the archive file
 ```
 
 ## Size Methods
@@ -179,23 +178,25 @@ public function totalSize(): int
 **Returns:** Total size in bytes
 
 **Example:**
+
 ```php
 $bytes = $post->images->totalSize();
 ```
 
-### `readableSize()`
+### `totalReadableSize()`
 
 Get human-readable total size.
 
 ```php
-public function readableSize(): string
+public function totalReadableSize(): string
 ```
 
 **Returns:** Formatted size string
 
 **Example:**
+
 ```php
-echo $post->images->readableSize(); // "15.3 MB"
+echo $post->images->totalReadableSize(); // "15.3 MB"
 ```
 
 ## Filtering Methods
@@ -209,11 +210,13 @@ public function ofType(string $type): static
 ```
 
 **Parameters:**
+
 - `$type` - Type to filter by: `'image'`, `'pdf'`, `'video'`, `'audio'`
 
 **Returns:** Filtered collection
 
 **Example:**
+
 ```php
 $images = $attachments->ofType('image');
 $pdfs = $attachments->ofType('pdf');
@@ -242,10 +245,10 @@ $post->images->each(function ($image) {
 
 ```php
 // Filter
-$large = $post->images->filter(fn($img) => $img->size > 1048576);
+$large = $post->images->filter(fn($img) => $img->size() > 1048576);
 
 // Reject
-$small = $post->images->reject(fn($img) => $img->size > 1048576);
+$small = $post->images->reject(fn($img) => $img->size() > 1048576);
 
 // Where
 $jpegs = $post->images->where('mime', 'image/jpeg');
@@ -304,7 +307,7 @@ $last = $post->images->last();
 $second = $post->images->get(1);
 
 // Find
-$specific = $post->images->first(fn($img) => $img->name === 'photo.jpg');
+$specific = $post->images->first(fn($img) => $img->name() === 'photo.jpg');
 ```
 
 ### Slicing
@@ -333,13 +336,13 @@ $post->images->chunk(10)->each(function ($chunk) {
 
 ```php
 // Contains
-$hasPhoto = $post->images->contains(fn($img) => $img->name === 'photo.jpg');
+$hasPhoto = $post->images->contains(fn($img) => $img->name() === 'photo.jpg');
 
 // Every
 $allImages = $post->images->every(fn($img) => $img->isImage());
 
 // Some
-$hasLarge = $post->images->some(fn($img) => $img->size > 1048576);
+$hasLarge = $post->images->some(fn($img) => $img->size() > 1048576);
 ```
 
 ### Transforming
@@ -366,7 +369,7 @@ $keys = $post->images->keys();
 // Get all images larger than 1MB
 $largeImages = $post->images
     ->filter(fn($img) => $img->isImage())
-    ->filter(fn($img) => $img->size > 1048576);
+    ->filter(fn($img) => $img->size() > 1048576);
 
 // Process them
 $largeImages->each(function ($image) {
@@ -413,4 +416,3 @@ $stats = [
 
 - [Attachment API](attachment.md)
 - [Configuration Reference](configuration.md)
-

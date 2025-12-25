@@ -19,6 +19,7 @@ public static function fromFile(
 ```
 
 **Parameters:**
+
 - `$file` - The uploaded file instance
 - `$disk` - Storage disk (defaults to config value)
 - `$folder` - Folder path (defaults to config value)
@@ -28,10 +29,12 @@ public static function fromFile(
 **Returns:** `Attachment` instance
 
 **Throws:**
+
 - `ValidationException` - If validation fails
 - `StorageException` - If file storage fails
 
 **Example:**
+
 ```php
 $attachment = Attachment::fromFile(
     $request->file('avatar'),
@@ -42,71 +45,104 @@ $attachment = Attachment::fromFile(
 );
 ```
 
-## Properties
+## Accessor Methods
 
-### `name`
+### `name()`
 
-The file name in storage.
+Get the file name in storage.
 
 ```php
-public ?string $name
+public function name(): ?string
 ```
 
 **Example:**
+
 ```php
-echo $attachment->name; // "abc123.jpg"
+echo $attachment->name(); // "abc123.jpg"
 ```
 
-### `disk`
+### `disk()`
 
-The storage disk name.
-
-```php
-public ?string $disk
-```
-
-**Example:**
-```php
-echo $attachment->disk; // "public"
-```
-
-### `size`
-
-File size in bytes.
+Get the storage disk name.
 
 ```php
-public ?int $size
+public function disk(): ?string
 ```
 
 **Example:**
+
 ```php
-echo $attachment->size; // 153600
+echo $attachment->disk(); // "public"
 ```
 
-### `mime`
+### `size()`
 
-MIME type of the file.
-
-```php
-public ?string $mime
-```
-
-**Example:**
-```php
-echo $attachment->mime; // "image/jpeg"
-```
-
-### `extname`
-
-File extension.
+Get file size in bytes.
 
 ```php
-public ?string $extname
+public function size(): ?int
 ```
 
 **Example:**
+
 ```php
-echo $attachment->extname; // "jpg"
+echo $attachment->size(); // 153600
+```
+
+### `mimeType()`
+
+Get MIME type of the file.
+
+```php
+public function mimeType(): ?string
+```
+
+**Example:**
+
+```php
+echo $attachment->mimeType(); // "image/jpeg"
+```
+
+### `extname()`
+
+Get file extension.
+
+```php
+public function extname(): ?string
+```
+
+**Example:**
+
+```php
+echo $attachment->extname(); // "jpg"
+```
+
+### `extension()`
+
+Get file extension (alias for `extname()`).
+
+```php
+public function extension(): ?string
+```
+
+**Example:**
+
+```php
+echo $attachment->extension(); // "jpg"
+```
+
+### `folder()`
+
+Get the folder/directory path.
+
+```php
+public function folder(): ?string
+```
+
+**Example:**
+
+```php
+echo $attachment->folder(); // "avatars"
 ```
 
 ## Methods
@@ -122,6 +158,7 @@ public function path(): string
 **Returns:** Full path including folder and name
 
 **Example:**
+
 ```php
 echo $attachment->path(); // "avatars/abc123.jpg"
 ```
@@ -137,6 +174,7 @@ public function url(): string
 **Returns:** Public URL to the file
 
 **Example:**
+
 ```php
 echo $attachment->url(); // "https://example.com/storage/avatars/abc123.jpg"
 ```
@@ -150,11 +188,13 @@ public function temporaryUrl(DateTimeInterface|int $expiration): string
 ```
 
 **Parameters:**
+
 - `$expiration` - Expiration time (Carbon instance or minutes)
 
 **Returns:** Temporary signed URL
 
 **Example:**
+
 ```php
 $url = $attachment->temporaryUrl(now()->addHour());
 $url = $attachment->temporaryUrl(60); // 60 minutes
@@ -171,6 +211,7 @@ public function exists(): bool
 **Returns:** `true` if file exists, `false` otherwise
 
 **Example:**
+
 ```php
 if ($attachment->exists()) {
     // File exists
@@ -188,6 +229,7 @@ public function contents(): string
 **Returns:** File contents as string
 
 **Example:**
+
 ```php
 $contents = $attachment->contents();
 ```
@@ -201,11 +243,13 @@ public function download(?string $name = null): StreamedResponse
 ```
 
 **Parameters:**
+
 - `$name` - Optional custom filename for download
 
 **Returns:** Laravel download response
 
 **Example:**
+
 ```php
 return $attachment->download();
 return $attachment->download('custom-name.jpg');
@@ -222,6 +266,7 @@ public function delete(): bool
 **Returns:** `true` if deleted successfully
 
 **Example:**
+
 ```php
 $attachment->delete();
 ```
@@ -237,6 +282,7 @@ public function readableSize(): string
 **Returns:** Formatted size string
 
 **Example:**
+
 ```php
 echo $attachment->readableSize(); // "1.5 MB"
 ```
@@ -250,6 +296,7 @@ public function move(?string $disk = null, ?string $folder = null, ?string $name
 ```
 
 **Parameters:**
+
 - `$disk` - Target disk (null to keep current)
 - `$folder` - Target folder (null to keep current)
 - `$name` - New filename (null to keep current)
@@ -257,6 +304,7 @@ public function move(?string $disk = null, ?string $folder = null, ?string $name
 **Returns:** New `Attachment` instance
 
 **Example:**
+
 ```php
 $newAttachment = $attachment->move('s3', 'archived');
 ```
@@ -270,6 +318,7 @@ public function copy(?string $disk = null, ?string $folder = null, ?string $name
 ```
 
 **Parameters:**
+
 - `$disk` - Target disk (null to use current)
 - `$folder` - Target folder (null to use current)
 - `$name` - New filename (null to auto-generate)
@@ -277,6 +326,7 @@ public function copy(?string $disk = null, ?string $folder = null, ?string $name
 **Returns:** New `Attachment` instance
 
 **Example:**
+
 ```php
 $backup = $attachment->copy('s3', 'backups');
 ```
@@ -292,6 +342,7 @@ public function isImage(): bool
 ```
 
 **Example:**
+
 ```php
 if ($attachment->isImage()) {
     // It's an image
@@ -333,12 +384,14 @@ public function metadata(?string $key = null, mixed $default = null): mixed
 ```
 
 **Parameters:**
+
 - `$key` - Metadata key (null to get all)
 - `$default` - Default value if key doesn't exist
 
 **Returns:** Metadata value or array of all metadata
 
 **Example:**
+
 ```php
 $value = $attachment->metadata('uploaded_by');
 $all = $attachment->metadata();
@@ -353,12 +406,14 @@ public function setMetadata(string|array $key, mixed $value = null): static
 ```
 
 **Parameters:**
+
 - `$key` - Metadata key or array of key-value pairs
 - `$value` - Value (when $key is string)
 
 **Returns:** `$this` for chaining
 
 **Example:**
+
 ```php
 $attachment->setMetadata('processed', true);
 $attachment->setMetadata(['processed' => true, 'processed_at' => now()]);
@@ -373,6 +428,7 @@ public function hasMetadata(string $key): bool
 ```
 
 **Example:**
+
 ```php
 if ($attachment->hasMetadata('description')) {
     // Metadata exists
@@ -401,4 +457,3 @@ public function toJson(int $options = 0): string
 
 - [Attachments Collection API](attachments.md)
 - [Configuration Reference](configuration.md)
-

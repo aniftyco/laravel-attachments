@@ -19,6 +19,7 @@ $url = $user->avatar->url();
 ### Requirements
 
 Public URLs require:
+
 1. Files stored on a public disk (e.g., `public`, `s3` with public access)
 2. For local public disk: symbolic link created with `php artisan storage:link`
 
@@ -71,6 +72,7 @@ ATTACHMENTS_TEMPORARY_URL_EXPIRATION=60
 ### Supported Disks
 
 Temporary URLs work with cloud storage providers:
+
 - Amazon S3
 - DigitalOcean Spaces
 - Google Cloud Storage
@@ -92,7 +94,7 @@ return $user->avatar->download('profile-picture.jpg');
 
 // Force download (Content-Disposition: attachment)
 return response()->download(
-    Storage::disk($user->avatar->disk)->path($user->avatar->name),
+    Storage::disk($user->avatar->disk())->path($user->avatar->name()),
     'custom-name.jpg'
 );
 ```
@@ -220,15 +222,15 @@ Response:
 
 ```json
 {
-    "id": 1,
-    "name": "John Doe",
-    "avatar": {
-        "url": "https://example.com/storage/avatars/abc123.jpg",
-        "name": "abc123.jpg",
-        "size": 153600,
-        "mime": "image/jpeg",
-        "readable_size": "150 KB"
-    }
+  "id": 1,
+  "name": "John Doe",
+  "avatar": {
+    "url": "https://example.com/storage/avatars/abc123.jpg",
+    "name": "abc123.jpg",
+    "size": 153600,
+    "mime": "image/jpeg",
+    "readable_size": "150 KB"
+  }
 }
 ```
 
@@ -268,16 +270,19 @@ return $invoice->url; // Anyone can access!
 ### Public URLs Not Working
 
 1. Check symbolic link exists:
+
 ```bash
 php artisan storage:link
 ```
 
 2. Verify disk configuration:
+
 ```php
 'url' => env('APP_URL').'/storage',
 ```
 
 3. Check file permissions:
+
 ```bash
 chmod -R 755 storage/app/public
 ```
@@ -292,6 +297,7 @@ chmod -R 755 storage/app/public
 
 1. Verify `url` is set in disk configuration
 2. Clear config cache:
+
 ```bash
 php artisan config:clear
 ```
@@ -301,4 +307,3 @@ php artisan config:clear
 - Learn about [API Resources](api-resources.md)
 - Configure [Storage & Disks](storage.md)
 - Explore [Metadata](metadata.md)
-
