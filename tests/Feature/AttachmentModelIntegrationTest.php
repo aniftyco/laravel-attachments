@@ -137,7 +137,7 @@ it('handles multiple attachments replacement', function () {
     $model->files = $files1;
     $model->save();
 
-    $oldPaths = $files1->map(fn($a) => $a->path())->toArray();
+    $oldPaths = $files1->map(fn ($a) => $a->path())->toArray();
 
     // Replace with new files
     $files2 = new Attachments([
@@ -157,7 +157,7 @@ it('handles multiple attachments replacement', function () {
 
 function createDocumentModel(): Model
 {
-    return new class extends Model
+    $model = new class extends Model
     {
         protected $table = 'documents';
         protected $guarded = [];
@@ -167,5 +167,8 @@ function createDocumentModel(): Model
             'files' => AsAttachments::class,
         ];
     };
-}
 
+    $model->title = 'Test Document';
+
+    return $model;
+}

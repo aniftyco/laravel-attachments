@@ -99,9 +99,9 @@ it('can copy all attachments to different disk', function () {
 });
 
 it('can create zip archive from attachments', function () {
-    $file1 = UploadedFile::fake()->create('doc1.txt', 10);
-    $file2 = UploadedFile::fake()->create('doc2.txt', 20);
-    $file3 = UploadedFile::fake()->create('doc3.txt', 30);
+    $file1 = UploadedFile::fake()->create('doc1.pdf', 10);
+    $file2 = UploadedFile::fake()->create('doc2.pdf', 20);
+    $file3 = UploadedFile::fake()->create('doc3.pdf', 30);
 
     $attachments = new Attachments([
         Attachment::fromFile($file1, 'public', 'files'),
@@ -112,7 +112,7 @@ it('can create zip archive from attachments', function () {
     $archive = $attachments->archive('documents.zip', 'public', 'archives');
 
     expect($archive)->toBeInstanceOf(Attachment::class)
-        ->and($archive->name)->toBe('documents.zip')
+        ->and(basename($archive->name))->toBe('documents.zip')
         ->and($archive->disk)->toBe('public')
         ->and($archive->extname)->toBe('zip')
         ->and(Storage::disk('public')->exists($archive->path()))->toBeTrue()

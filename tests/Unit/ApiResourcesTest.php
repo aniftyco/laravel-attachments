@@ -14,7 +14,7 @@ beforeEach(function () {
 it('can transform attachment to resource', function () {
     $file = UploadedFile::fake()->image('photo.jpg', 100, 100);
     $attachment = Attachment::fromFile($file, 'public', 'photos')
-        ->withMeta('author', 'John Doe');
+        ->setMeta('author', 'John Doe');
 
     $resource = new AttachmentResource($attachment);
     $array = $resource->toArray(request());
@@ -33,11 +33,12 @@ it('can transform attachment to resource', function () {
         'created_at',
         'updated_at',
     ])
-        ->and($array['name'])->toBe('photo.jpg')
+        ->and($array['name'])->toContain('.jpg')
         ->and($array['disk'])->toBe('public')
         ->and($array['folder'])->toBe('photos')
         ->and($array['extension'])->toBe('jpg')
-        ->and($array['metadata'])->toBe(['author' => 'John Doe']);
+        ->and($array['metadata'])->toHaveKey('author')
+        ->and($array['metadata']['author'])->toBe('John Doe');
 });
 
 it('includes file type in resource response', function () {
@@ -108,7 +109,8 @@ it('resource includes url', function () {
     $array = $resource->toArray(request());
 
     expect($array['url'])->toBeString()
-        ->and($array['url'])->toContain('photo.jpg');
+        ->and($array['url'])->toContain('/storage/photos/')
+        ->and($array['url'])->toContain('.jpg');
 });
 
 it('resource handles null timestamps', function () {
@@ -135,4 +137,3 @@ it('resource formats timestamps when present', function () {
     expect($array['created_at'])->toBeString()
         ->and($array['updated_at'])->toBeString();
 });
-

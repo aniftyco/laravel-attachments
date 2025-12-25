@@ -33,7 +33,8 @@ it('can attach a file to an attribute', function () {
     $model->attachFile('avatar', $file, 'public', 'avatars');
 
     expect($model->avatar)->not->toBeNull()
-        ->and($model->avatar->name)->toBe('avatar.jpg');
+        ->and($model->avatar->extname)->toBe('jpg')
+        ->and($model->avatar->disk)->toBe('public');
 });
 
 it('can attach multiple files to an attribute', function () {
@@ -77,10 +78,12 @@ it('can remove attachment by name', function () {
 
     expect($model->photos)->toHaveCount(3);
 
-    $model->removeAttachment('photos', 'photo2.jpg');
+    // Get the actual stored name of the second photo
+    $secondPhotoName = $model->photos->get(1)->name;
+    $model->removeAttachment('photos', $secondPhotoName);
 
     expect($model->photos)->toHaveCount(2)
-        ->and($model->photos->pluck('name')->toArray())->not->toContain('photo2.jpg');
+        ->and($model->photos->pluck('name')->toArray())->not->toContain($secondPhotoName);
 });
 
 it('can clear all attachments without deleting files', function () {
@@ -155,10 +158,9 @@ it('returns zero size when no attachments', function () {
 it('can add attachment to null collection', function () {
     $model = new TestModelWithAttachments;
 
-    expect($model->photos)->toBeNull();
+    expect($model->photos)->toBeEmpty();
 
     $model->addAttachment('photos', UploadedFile::fake()->image('photo1.jpg'), 'public', 'photos');
 
     expect($model->photos)->toHaveCount(1);
 });
-

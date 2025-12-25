@@ -52,7 +52,7 @@ it('can move attachment between disks', function () {
     expect($moved->disk)->toBe('s3')
         ->and(Storage::disk('public')->exists($originalPath))->toBeFalse()
         ->and(Storage::disk('s3')->exists($moved->path()))->toBeTrue()
-        ->and($moved->name)->toBe($attachment->name);
+        ->and(basename($moved->name))->toBe(basename($attachment->name));
 });
 
 it('can duplicate attachment to different disk', function () {
@@ -94,13 +94,14 @@ it('can check if file exists in storage', function () {
 });
 
 it('can get file contents from storage', function () {
-    $file = UploadedFile::fake()->create('content.txt', 10);
+    // Create a file with actual content
+    $file = UploadedFile::fake()->createWithContent('content.txt', 'Hello World!');
 
     $attachment = Attachment::fromFile($file, 'public', 'files');
     $contents = $attachment->contents();
 
     expect($contents)->toBeString()
-        ->and(strlen($contents))->toBeGreaterThan(0);
+        ->and($contents)->toBe('Hello World!');
 });
 
 it('can get file url from storage', function () {
@@ -151,10 +152,9 @@ it('can rename attachment file', function () {
     $attachment = Attachment::fromFile($file, 'public', 'images');
     $oldPath = $attachment->path();
 
-    $renamed = $attachment->rename('new-name.jpg');
+    $renamed = $attachment->rename('new-name');
 
-    expect($renamed->name)->toBe('new-name.jpg')
+    expect(basename($renamed->name))->toBe('new-name.jpg')
         ->and(Storage::disk('public')->exists($oldPath))->toBeFalse()
         ->and(Storage::disk('public')->exists($renamed->path()))->toBeTrue();
 });
-
