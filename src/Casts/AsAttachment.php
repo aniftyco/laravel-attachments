@@ -6,11 +6,14 @@ use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
 use NiftyCo\Attachments\Attachment;
 
+/**
+ * @implements CastsAttributes<Attachment|null, Attachment|null>
+ */
 class AsAttachment implements CastsAttributes
 {
     public function get(Model $model, string $key, mixed $value, array $attributes): ?Attachment
     {
-        if (! isset($attributes[$key]) || $attributes[$key] === null) {
+        if (! isset($attributes[$key])) {
             return null;
         }
 

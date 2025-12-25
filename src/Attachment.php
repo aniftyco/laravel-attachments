@@ -12,8 +12,13 @@ class Attachment implements Jsonable, JsonSerializable
 {
     private string $url;
 
+    /** @var array<string, mixed> */
     private array $metadata = [];
 
+    /**
+     * @param  array<string>|string|null  $validate
+     * @param  array<string, mixed>  $metadata
+     */
     public static function fromFile(
         UploadedFile $file,
         ?string $disk = null,
@@ -51,6 +56,9 @@ class Attachment implements Jsonable, JsonSerializable
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $metadata
+     */
     public function __construct(
         private ?string $disk,
         private ?string $name,
@@ -62,6 +70,7 @@ class Attachment implements Jsonable, JsonSerializable
         $this->metadata = $metadata;
         if ($this->disk && $this->name) {
             try {
+                /** @phpstan-ignore method.notFound */
                 $this->url = Storage::disk($this->disk)->url($this->name);
             } catch (\Exception $e) {
                 $this->url = '';
@@ -157,7 +166,7 @@ class Attachment implements Jsonable, JsonSerializable
      * Get the URL for the attachment.
      *
      * @param  bool  $full  Whether to return a full URL
-     * @param  array  $parameters  Additional URL parameters
+     * @param  array<int|string, mixed>  $parameters  Additional URL parameters
      * @param  bool|null  $secure  Whether to force HTTPS
      */
     public function url(bool $full = false, array $parameters = [], ?bool $secure = null): string
@@ -185,6 +194,7 @@ class Attachment implements Jsonable, JsonSerializable
         }
 
         try {
+            /** @phpstan-ignore method.notFound */
             return Storage::disk($this->disk)->temporaryUrl($this->name, $expiration);
         } catch (\Exception $e) {
             throw new \RuntimeException("Failed to generate temporary URL: {$e->getMessage()}");
@@ -215,11 +225,12 @@ class Attachment implements Jsonable, JsonSerializable
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $bytes = max($this->size, 0);
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-        $pow = min($pow, count($units) - 1);
+        $pow = min($pow, \count($units) - 1);
+        $index = (int) $pow;
 
         $bytes /= (1 << (10 * $pow));
 
-        return round($bytes, $precision).' '.$units[$pow];
+        return round($bytes, $precision).' '.$units[$index];
     }
 
     /**
@@ -246,6 +257,7 @@ class Attachment implements Jsonable, JsonSerializable
         }
 
         try {
+            /** @phpstan-ignore method.notFound */
             return Storage::disk($this->disk)->download($this->name, $name);
         } catch (\Exception $e) {
             throw new \RuntimeException("Failed to download file: {$e->getMessage()}");
@@ -281,6 +293,9 @@ class Attachment implements Jsonable, JsonSerializable
 
             // Copy to new location
             $contents = Storage::disk($this->disk)->get($this->name);
+            if ($contents === null) {
+                throw new \RuntimeException('Failed to read file contents');
+            }
             Storage::disk($targetDisk)->put($newPath, $contents);
 
             // Delete old file
@@ -368,6 +383,9 @@ class Attachment implements Jsonable, JsonSerializable
 
             // Copy file
             $contents = Storage::disk($this->disk)->get($this->name);
+            if ($contents === null) {
+                throw new \RuntimeException('Failed to read file contents');
+            }
             Storage::disk($targetDisk)->put($newPath, $contents);
 
             // Return new instance
@@ -407,7 +425,7 @@ class Attachment implements Jsonable, JsonSerializable
     /**
      * Set metadata for the attachment (fluent).
      *
-     * @param  array  $metadata  Metadata key-value pairs
+     * @param  array<string, mixed>  $metadata  Metadata key-value pairs
      * @return static New attachment instance with metadata
      */
     public function withMetadata(array $metadata): static
@@ -420,6 +438,8 @@ class Attachment implements Jsonable, JsonSerializable
 
     /**
      * Get all metadata.
+     *
+     * @return array<string, mixed>
      */
     public function metadata(): array
     {
@@ -476,6 +496,9 @@ class Attachment implements Jsonable, JsonSerializable
         return $clone;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         $array = [
@@ -493,6 +516,9 @@ class Attachment implements Jsonable, JsonSerializable
         return $array;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function jsonSerialize(): array
     {
         return $this->toArray();
@@ -500,7 +526,7 @@ class Attachment implements Jsonable, JsonSerializable
 
     public function toJson($options = 0): string
     {
-        return json_encode($this->jsonSerialize(), $options);
+        return json_encode($this->jsonSerialize(), $options) ?: '{}';
     }
 
     /**
@@ -581,16 +607,16 @@ class Attachment implements Jsonable, JsonSerializable
         $basename = pathinfo($filename, PATHINFO_FILENAME);
 
         // Remove any characters that aren't alphanumeric, dash, underscore, or space
-        $basename = preg_replace('/[^a-zA-Z0-9\-_\s]/', '', $basename);
+        $basename = (string) preg_replace('/[^a-zA-Z0-9\-_\s]/', '', $basename);
 
         // Replace multiple spaces with a single space
-        $basename = preg_replace('/\s+/', ' ', $basename);
+        $basename = (string) preg_replace('/\s+/', ' ', $basename);
 
         // Replace spaces with dashes
         $basename = str_replace(' ', '-', $basename);
 
         // Remove multiple consecutive dashes
-        $basename = preg_replace('/-+/', '-', $basename);
+        $basename = (string) preg_replace('/-+/', '-', $basename);
 
         // Trim dashes from start and end
         $basename = trim($basename, '-');
@@ -602,34 +628,5 @@ class Attachment implements Jsonable, JsonSerializable
 
         // Rebuild the filename
         return $extension ? $basename.'.'.$extension : $basename;
-    }
-
-    /**
-     * Magic getter for accessing private properties.
-     */
-    public function __get(string $name): mixed
-    {
-        return match ($name) {
-            'disk' => $this->disk,
-            'name' => $this->name,
-            'size' => $this->size,
-            'extname', 'extension' => $this->extname,
-            'mime', 'mimeType' => $this->mimeType,
-            'metadata' => $this->metadata,
-            'folder' => dirname($this->name) !== '.' ? dirname($this->name) : null,
-            'created_at', 'updated_at' => $this->getMeta($name),
-            default => null,
-        };
-    }
-
-    /**
-     * Magic isset for checking private properties.
-     */
-    public function __isset(string $name): bool
-    {
-        return match ($name) {
-            'disk', 'name', 'size', 'extname', 'extension', 'mime', 'mimeType', 'metadata', 'folder', 'created_at', 'updated_at' => true,
-            default => false,
-        };
     }
 }

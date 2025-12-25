@@ -17,6 +17,7 @@ class Attachments extends Collection
      * Create a collection of attachments from multiple uploaded files.
      *
      * @param  array<UploadedFile>  $files
+     * @param  array<string>|string|null  $validate
      *
      * @throws \NiftyCo\Attachments\Exceptions\StorageException
      * @throws \NiftyCo\Attachments\Exceptions\ValidationException
@@ -39,6 +40,8 @@ class Attachments extends Collection
     /**
      * Attach a file to the collection.
      *
+     * @param  array<string>|string|null  $validate
+     *
      * @throws \NiftyCo\Attachments\Exceptions\StorageException
      * @throws \NiftyCo\Attachments\Exceptions\ValidationException
      */
@@ -55,6 +58,8 @@ class Attachments extends Collection
 
     /**
      * Alias for attach() for backwards compatibility.
+     *
+     * @param  array<string>|string|null  $validate
      *
      * @deprecated Use attach() instead
      */
@@ -142,7 +147,7 @@ class Attachments extends Collection
         }
 
         // Use first attachment's disk if not specified
-        $disk = $disk ?? $this->first()->disk;
+        $disk = $disk ?? $this->first()->disk();
         $folder = $folder ?? 'archives';
 
         // Create temporary zip file
@@ -156,7 +161,11 @@ class Attachments extends Collection
         // Add each attachment to the zip
         foreach ($this->items as $attachment) {
             $contents = $attachment->contents();
-            $zip->addFromString($attachment->name, $contents);
+            $name = $attachment->path();
+            if ($name === null) {
+                continue;
+            }
+            $zip->addFromString($name, $contents);
         }
 
         $zip->close();
@@ -196,8 +205,9 @@ class Attachments extends Collection
 
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $power = $bytes > 0 ? floor(log($bytes, 1024)) : 0;
+        $index = (int) min($power, \count($units) - 1);
 
-        return number_format($bytes / pow(1024, $power), 2, '.', ',').' '.$units[$power];
+        return number_format($bytes / pow(1024, $power), 2, '.', ',').' '.$units[$index];
     }
 
     /**

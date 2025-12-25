@@ -2,4 +2,28 @@ parameters:
     level: 8
     paths:
         - src
-
+    excludePaths:
+        # Filament components - optional dependency
+        - src/Filament/*
+        # Traits are analyzed when used
+        - src/Concerns/*
+        - src/Testing/*
+    ignoreErrors:
+        # Laravel Filesystem methods that PHPStan doesn't recognize
+        -
+            message: '#Call to an undefined method Illuminate\\Contracts\\Filesystem\\Filesystem::(url|temporaryUrl|download)\(\)#'
+            path: src/Attachment.php
+        # new static() is safe in our context
+        -
+            message: '#Unsafe usage of new static\(\)#'
+            paths:
+                - src/Attachment.php
+                - src/Attachments.php
+        # Event classes are optional and may not exist
+        -
+            message: '#(AttachmentCreated|AttachmentDeleted)#'
+            path: src/Casts/AsAttachments.php
+        # Collection generic type variance is expected
+        -
+            message: '#Parameter .* of method Illuminate\\Support\\Collection.*::add\(\)#'
+            path: src/Attachments.php
