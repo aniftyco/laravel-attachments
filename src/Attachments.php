@@ -57,22 +57,6 @@ class Attachments extends Collection
     }
 
     /**
-     * Alias for attach() for backwards compatibility.
-     *
-     * @param  array<string>|string|null  $validate
-     *
-     * @deprecated Use attach() instead
-     */
-    public function addFromFile(
-        UploadedFile $file,
-        ?string $disk = null,
-        ?string $folder = null,
-        array|string|null $validate = null
-    ): static {
-        return $this->attach($file, $disk, $folder, $validate);
-    }
-
-    /**
      * Delete all attachments in the collection from storage.
      *
      * @return bool True if all deletions were successful

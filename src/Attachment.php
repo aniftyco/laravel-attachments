@@ -160,19 +160,9 @@ class Attachment implements Jsonable, JsonSerializable
     /**
      * Get the MIME type.
      */
-    public function mime(): ?string
-    {
-        return $this->mimeType;
-    }
-
-    /**
-     * Alias for mime() for backwards compatibility.
-     *
-     * @deprecated Use mime() instead
-     */
     public function mimeType(): ?string
     {
-        return $this->mime();
+        return $this->mimeType;
     }
 
     /**
@@ -202,7 +192,7 @@ class Attachment implements Jsonable, JsonSerializable
      *
      * @throws \RuntimeException
      */
-    public function tempUrl(\DateTimeInterface|int|null $expiration = null): string
+    public function temporaryUrl(\DateTimeInterface|int|null $expiration = null): string
     {
         if (! $this->disk || ! $this->name) {
             throw new \RuntimeException('Cannot generate temporary URL for attachment without disk or name.');
@@ -219,16 +209,6 @@ class Attachment implements Jsonable, JsonSerializable
         } catch (\Exception $e) {
             throw new \RuntimeException("Failed to generate temporary URL: {$e->getMessage()}");
         }
-    }
-
-    /**
-     * Alias for tempUrl() for backwards compatibility.
-     *
-     * @deprecated Use tempUrl() instead
-     */
-    public function temporaryUrl(\DateTimeInterface|int|null $expiration = null): string
-    {
-        return $this->tempUrl($expiration);
     }
 
     /**
@@ -250,16 +230,6 @@ class Attachment implements Jsonable, JsonSerializable
         $bytes /= (1 << (10 * $pow));
 
         return round($bytes, $precision).' '.$units[$pow];
-    }
-
-    /**
-     * Alias for readableSize() for backwards compatibility.
-     *
-     * @deprecated Use readableSize() instead
-     */
-    public function humanReadableSize(int $precision = 2): string
-    {
-        return $this->readableSize($precision);
     }
 
     /**
