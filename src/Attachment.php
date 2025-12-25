@@ -12,11 +12,14 @@ class Attachment implements Jsonable, JsonSerializable
 {
     private string $url;
 
+    private array $metadata = [];
+
     public static function fromFile(
         UploadedFile $file,
         ?string $disk = null,
         ?string $folder = null,
-        array|string|null $validate = null
+        array|string|null $validate = null,
+        array $metadata = []
     ): static {
         // Validate file
         FileValidator::validate($file, $validate);
@@ -32,13 +35,17 @@ class Attachment implements Jsonable, JsonSerializable
                 throw StorageException::uploadFailed('File storage returned false');
             }
 
-            return new static(
+            $attachment = new static(
                 disk: $disk,
                 name: $path,
                 size: $file->getSize(),
                 extname: $file->extension(),
                 mimeType: $file->getMimeType()
             );
+
+            $attachment->metadata = $metadata;
+
+            return $attachment;
         } catch (\Exception $e) {
             throw StorageException::uploadFailed($e->getMessage());
         }
@@ -50,7 +57,9 @@ class Attachment implements Jsonable, JsonSerializable
         private ?int $size,
         private ?string $extname,
         private ?string $mimeType,
+        array $metadata = []
     ) {
+        $this->metadata = $metadata;
         if ($this->disk && $this->name) {
             try {
                 $this->url = Storage::disk($this->disk)->url($this->name);
@@ -244,6 +253,138 @@ class Attachment implements Jsonable, JsonSerializable
     }
 
     /**
+     * Move the attachment to a different disk or folder.
+     *
+     * @param  string|null  $disk  Target disk (null to keep current)
+     * @param  string|null  $folder  Target folder (null to keep current)
+     * @return static New attachment instance with updated location
+     *
+     * @throws \RuntimeException
+     */
+    public function move(?string $disk = null, ?string $folder = null): static
+    {
+        if (! $this->disk || ! $this->name) {
+            throw new \RuntimeException('Cannot move attachment without disk or name.');
+        }
+
+        $targetDisk = $disk ?? $this->disk;
+        $targetFolder = $folder ?? dirname($this->name);
+
+        // If nothing changed, return current instance
+        if ($targetDisk === $this->disk && $targetFolder === dirname($this->name)) {
+            return $this;
+        }
+
+        try {
+            $filename = basename($this->name);
+            $newPath = $targetFolder === '.' ? $filename : $targetFolder.'/'.$filename;
+
+            // Copy to new location
+            $contents = Storage::disk($this->disk)->get($this->name);
+            Storage::disk($targetDisk)->put($newPath, $contents);
+
+            // Delete old file
+            Storage::disk($this->disk)->delete($this->name);
+
+            // Return new instance with updated location
+            return new static(
+                disk: $targetDisk,
+                name: $newPath,
+                size: $this->size,
+                extname: $this->extname,
+                mimeType: $this->mimeType,
+                metadata: $this->metadata
+            );
+        } catch (\Exception $e) {
+            throw new \RuntimeException("Failed to move file: {$e->getMessage()}");
+        }
+    }
+
+    /**
+     * Rename the attachment file.
+     *
+     * @param  string  $newName  New filename (without extension)
+     * @param  bool  $keepExtension  Whether to keep the original extension
+     * @return static New attachment instance with updated name
+     *
+     * @throws \RuntimeException
+     */
+    public function rename(string $newName, bool $keepExtension = true): static
+    {
+        if (! $this->disk || ! $this->name) {
+            throw new \RuntimeException('Cannot rename attachment without disk or name.');
+        }
+
+        try {
+            $folder = dirname($this->name);
+            $extension = $keepExtension ? '.'.$this->extname : '';
+            $newPath = ($folder === '.' ? '' : $folder.'/').$newName.$extension;
+
+            // Rename file
+            Storage::disk($this->disk)->move($this->name, $newPath);
+
+            // Return new instance with updated name
+            return new static(
+                disk: $this->disk,
+                name: $newPath,
+                size: $this->size,
+                extname: $this->extname,
+                mimeType: $this->mimeType,
+                metadata: $this->metadata
+            );
+        } catch (\Exception $e) {
+            throw new \RuntimeException("Failed to rename file: {$e->getMessage()}");
+        }
+    }
+
+    /**
+     * Create a duplicate of the attachment.
+     *
+     * @param  string|null  $disk  Target disk (null to use same disk)
+     * @param  string|null  $folder  Target folder (null to use same folder)
+     * @param  string|null  $name  Custom filename (null to auto-generate)
+     * @return static New attachment instance
+     *
+     * @throws \RuntimeException
+     */
+    public function duplicate(?string $disk = null, ?string $folder = null, ?string $name = null): static
+    {
+        if (! $this->disk || ! $this->name) {
+            throw new \RuntimeException('Cannot duplicate attachment without disk or name.');
+        }
+
+        try {
+            $targetDisk = $disk ?? $this->disk;
+            $targetFolder = $folder ?? dirname($this->name);
+
+            // Generate new filename if not provided
+            if ($name === null) {
+                $basename = pathinfo($this->name, PATHINFO_FILENAME);
+                $extension = $this->extname;
+                $name = $basename.'_copy_'.time().'.'.$extension;
+            }
+
+            $newPath = $targetFolder === '.' ? $name : $targetFolder.'/'.$name;
+
+            // Copy file
+            $contents = Storage::disk($this->disk)->get($this->name);
+            Storage::disk($targetDisk)->put($newPath, $contents);
+
+            // Return new instance
+            return new static(
+                disk: $targetDisk,
+                name: $newPath,
+                size: $this->size,
+                extname: $this->extname,
+                mimeType: $this->mimeType,
+                metadata: $this->metadata
+            );
+        } catch (\Exception $e) {
+            throw new \RuntimeException("Failed to duplicate file: {$e->getMessage()}");
+        }
+    }
+
+    /**
      * Get the file contents.
      *
      * @throws \RuntimeException
@@ -263,15 +404,93 @@ class Attachment implements Jsonable, JsonSerializable
         }
     }
 
+    /**
+     * Set metadata for the attachment (fluent).
+     *
+     * @param  array  $metadata  Metadata key-value pairs
+     * @return static New attachment instance with metadata
+     */
+    public function withMetadata(array $metadata): static
+    {
+        $clone = clone $this;
+        $clone->metadata = $metadata;
+
+        return $clone;
+    }
+
+    /**
+     * Get all metadata.
+     */
+    public function metadata(): array
+    {
+        return $this->metadata;
+    }
+
+    /**
+     * Get a specific metadata value.
+     *
+     * @param  string  $key  Metadata key
+     * @param  mixed  $default  Default value if key doesn't exist
+     */
+    public function getMeta(string $key, mixed $default = null): mixed
+    {
+        return $this->metadata[$key] ?? $default;
+    }
+
+    /**
+     * Set a specific metadata value.
+     *
+     * @param  string  $key  Metadata key
+     * @param  mixed  $value  Metadata value
+     * @return static New attachment instance with updated metadata
+     */
+    public function setMeta(string $key, mixed $value): static
+    {
+        $clone = clone $this;
+        $clone->metadata[$key] = $value;
+
+        return $clone;
+    }
+
+    /**
+     * Check if metadata key exists.
+     *
+     * @param  string  $key  Metadata key
+     */
+    public function hasMeta(string $key): bool
+    {
+        return isset($this->metadata[$key]);
+    }
+
+    /**
+     * Remove a metadata key.
+     *
+     * @param  string  $key  Metadata key
+     * @return static New attachment instance without the metadata key
+     */
+    public function removeMeta(string $key): static
+    {
+        $clone = clone $this;
+        unset($clone->metadata[$key]);
+
+        return $clone;
+    }
+
     public function toArray(): array
     {
-        return [
+        $array = [
             'disk' => $this->disk,
             'name' => $this->name,
             'size' => $this->size,
             'extname' => $this->extname,
             'mimeType' => $this->mimeType,
         ];
+
+        if (! empty($this->metadata)) {
+            $array['metadata'] = $this->metadata;
+        }
+
+        return $array;
     }
 
     public function jsonSerialize(): array
@@ -282,5 +501,135 @@ class Attachment implements Jsonable, JsonSerializable
     public function toJson($options = 0): string
     {
         return json_encode($this->jsonSerialize(), $options);
+    }
+
+    /**
+     * Check if the attachment is an image.
+     */
+    public function isImage(): bool
+    {
+        if ($this->mimeType === null) {
+            return false;
+        }
+
+        return str_starts_with($this->mimeType, 'image/');
+    }
+
+    /**
+     * Check if the attachment is a PDF.
+     */
+    public function isPdf(): bool
+    {
+        return $this->mimeType === 'application/pdf';
+    }
+
+    /**
+     * Check if the attachment is a video.
+     */
+    public function isVideo(): bool
+    {
+        if ($this->mimeType === null) {
+            return false;
+        }
+
+        return str_starts_with($this->mimeType, 'video/');
+    }
+
+    /**
+     * Check if the attachment is an audio file.
+     */
+    public function isAudio(): bool
+    {
+        if ($this->mimeType === null) {
+            return false;
+        }
+
+        return str_starts_with($this->mimeType, 'audio/');
+    }
+
+    /**
+     * Check if the attachment is a document (PDF, Word, Excel, etc.).
+     */
+    public function isDocument(): bool
+    {
+        if ($this->mimeType === null) {
+            return false;
+        }
+
+        $documentMimes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'text/plain',
+            'text/csv',
+        ];
+
+        return in_array($this->mimeType, $documentMimes);
+    }
+
+    /**
+     * Sanitize a filename for safe storage.
+     */
+    public static function sanitizeFilename(string $filename): string
+    {
+        // Get the extension
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        $basename = pathinfo($filename, PATHINFO_FILENAME);
+
+        // Remove any characters that aren't alphanumeric, dash, underscore, or space
+        $basename = preg_replace('/[^a-zA-Z0-9\-_\s]/', '', $basename);
+
+        // Replace multiple spaces with a single space
+        $basename = preg_replace('/\s+/', ' ', $basename);
+
+        // Replace spaces with dashes
+        $basename = str_replace(' ', '-', $basename);
+
+        // Remove multiple consecutive dashes
+        $basename = preg_replace('/-+/', '-', $basename);
+
+        // Trim dashes from start and end
+        $basename = trim($basename, '-');
+
+        // If basename is empty after sanitization, use a default
+        if (empty($basename)) {
+            $basename = 'file';
+        }
+
+        // Rebuild the filename
+        return $extension ? $basename.'.'.$extension : $basename;
+    }
+
+    /**
+     * Magic getter for accessing private properties.
+     */
+    public function __get(string $name): mixed
+    {
+        return match ($name) {
+            'disk' => $this->disk,
+            'name' => $this->name,
+            'size' => $this->size,
+            'extname', 'extension' => $this->extname,
+            'mime', 'mimeType' => $this->mimeType,
+            'metadata' => $this->metadata,
+            'folder' => dirname($this->name) !== '.' ? dirname($this->name) : null,
+            'created_at', 'updated_at' => $this->getMeta($name),
+            default => null,
+        };
+    }
+
+    /**
+     * Magic isset for checking private properties.
+     */
+    public function __isset(string $name): bool
+    {
+        return match ($name) {
+            'disk', 'name', 'size', 'extname', 'extension', 'mime', 'mimeType', 'metadata', 'folder', 'created_at', 'updated_at' => true,
+            default => false,
+        };
     }
 }
