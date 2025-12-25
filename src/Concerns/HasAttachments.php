@@ -15,10 +15,9 @@ trait HasAttachments
         string $attribute,
         UploadedFile $file,
         ?string $disk = null,
-        ?string $folder = null,
-        array|string|null $validate = null
+        ?string $folder = null
     ): static {
-        $attachment = Attachment::fromFile($file, $disk, $folder, $validate);
+        $attachment = Attachment::fromFile($file, $disk, $folder);
 
         $this->setAttribute($attribute, $attachment);
 
@@ -34,10 +33,9 @@ trait HasAttachments
         string $attribute,
         array $files,
         ?string $disk = null,
-        ?string $folder = null,
-        array|string|null $validate = null
+        ?string $folder = null
     ): static {
-        $attachments = Attachments::fromFiles($files, $disk, $folder, $validate);
+        $attachments = Attachments::fromFiles($files, $disk, $folder);
 
         $this->setAttribute($attribute, $attachments);
 
@@ -51,8 +49,7 @@ trait HasAttachments
         string $attribute,
         UploadedFile $file,
         ?string $disk = null,
-        ?string $folder = null,
-        array|string|null $validate = null
+        ?string $folder = null
     ): static {
         $currentAttachments = $this->getAttribute($attribute);
 
@@ -60,7 +57,7 @@ trait HasAttachments
             $currentAttachments = new Attachments($currentAttachments ? [$currentAttachments] : []);
         }
 
-        $currentAttachments->attach($file, $disk, $folder, $validate);
+        $currentAttachments->attach($file, $disk, $folder);
 
         $this->setAttribute($attribute, $currentAttachments);
 
@@ -75,7 +72,7 @@ trait HasAttachments
         $attachments = $this->getAttribute($attribute);
 
         if ($attachments instanceof Attachments) {
-            $filtered = $attachments->filter(fn (Attachment $a) => $a->name() !== $name);
+            $filtered = $attachments->filter(fn (Attachment $a) => $a->path() !== $name);
             $this->setAttribute($attribute, $filtered);
         }
 
