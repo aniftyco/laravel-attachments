@@ -40,7 +40,7 @@ class AttachmentField extends FileUpload
     /**
      * Configure the field to work with single attachments.
      */
-    public static function make(string $name): static
+    public static function make(?string $name = null): static
     {
         return parent::make($name)
             ->disk(config('attachments.disk', 'public'))
@@ -54,12 +54,11 @@ class AttachmentField extends FileUpload
                     return $state;
                 }
 
-                if (is_string($state)) {
+                if (\is_string($state)) {
                     // Handle file path from upload
                     return Attachment::fromPath(
                         $state,
-                        config('attachments.disk', 'public'),
-                        config('attachments.folder', 'attachments')
+                        config('attachments.disk', 'public')
                     );
                 }
 
@@ -77,10 +76,10 @@ class AttachmentField extends FileUpload
     /**
      * Configure the field to work with multiple attachments.
      */
-    public static function multiple(string $name): static
+    public static function forMultiple(?string $name = null): static
     {
         return static::make($name)
-            ->multiple()
+            ->multiple(true)
             ->dehydrateStateUsing(function ($state) {
                 if (! $state) {
                     return [];
@@ -91,11 +90,10 @@ class AttachmentField extends FileUpload
                         return $item;
                     }
 
-                    if (is_string($item)) {
+                    if (\is_string($item)) {
                         return Attachment::fromPath(
                             $item,
-                            config('attachments.disk', 'public'),
-                            config('attachments.folder', 'attachments')
+                            config('attachments.disk', 'public')
                         );
                     }
 
