@@ -41,29 +41,103 @@ Publish the configuration file (optional):
 php artisan vendor:publish --tag=attachments-config
 ```
 
-## Usage
+## Quick Start
 
-### Migrations
+### 1. Install the Package
 
-Your migrations need to have a `Blueprint::jsonb()` column set on it.
+```sh
+composer require aniftyco/laravel-attachments
+```
+
+### 2. Create Migration
+
+Use the convenient Blueprint macros:
 
 ```php
-return new class extends Migration {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-            //...
+Schema::create('users', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
 
-            $table->jsonb('avatar')->nullable();
-        });
-    }
-};
+    // Single attachment
+    $table->attachment('avatar');
+
+    // Multiple attachments
+    $table->attachments('photos');
+
+    $table->timestamps();
+});
 ```
+
+Or use the traditional JSON column approach:
+
+```php
+Schema::create('users', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->json('avatar')->nullable();
+    $table->json('photos')->nullable();
+    $table->timestamps();
+});
+```
+
+### 3. Add Casts to Your Model
+
+```php
+use Illuminate\Database\Eloquent\Model;
+use NiftyCo\Attachments\Casts\AsAttachment;
+use NiftyCo\Attachments\Casts\AsAttachments;
+
+class User extends Model
+{
+    protected function casts(): array
+    {
+        return [
+            'avatar' => AsAttachment::class,
+            'photos' => AsAttachments::class,
+        ];
+    }
+}
+```
+
+### 4. Upload Files
+
+```php
+use NiftyCo\Attachments\Attachment;
+use NiftyCo\Attachments\Attachments;
+
+// Single attachment
+$user->avatar = Attachment::fromFile($request->file('avatar'), folder: 'avatars');
+$user->save();
+
+// Multiple attachments
+$user->photos = Attachments::fromFiles($request->file('photos'), folder: 'photos');
+$user->save();
+```
+
+### 5. Access Attachments
+
+```php
+// Get URL
+$url = $user->avatar->url();
+
+// Download
+return $user->avatar->download();
+
+// Check file type
+if ($user->avatar->isImage()) {
+    // It's an image
+}
+
+// Loop through multiple attachments
+foreach ($user->photos as $photo) {
+    echo $photo->url();
+}
+```
+
+## Usage
 
 ### Adding Attachments to Models
 
@@ -247,6 +321,69 @@ $post->images->addFromFile($file, folder: 'posts');
 // Remove an attachment
 $post->images = $post->images->filter(fn($img) => $img->name !== 'old.jpg');
 $post->save();
+```
+
+## Collection Operations
+
+The `Attachments` collection provides powerful bulk operations:
+
+### Bulk Delete
+
+```php
+// Delete all attachments in collection
+$post->images->delete();
+```
+
+### Bulk Move
+
+```php
+// Move all attachments to different disk/folder
+$movedImages = $post->images->move('s3', 'archived-posts');
+$post->images = $movedImages;
+$post->save();
+```
+
+### Bulk Copy
+
+```php
+// Copy all attachments to backup location
+$backupImages = $post->images->copy('backup', 'backups/posts');
+```
+
+### Create Archive
+
+```php
+// Create a zip archive of all attachments
+$archive = $post->images->archive('post-images.zip', 'public', 'archives');
+
+// Download the archive
+return $archive->download();
+```
+
+### Size Calculations
+
+```php
+// Get total size in bytes
+$totalBytes = $post->images->totalSize();
+
+// Get human-readable size
+$readableSize = $post->images->totalReadableSize(); // "15.5 MB"
+```
+
+### Filter by Type
+
+```php
+// Get only images
+$images = $post->attachments->ofType('image');
+
+// Get only PDFs
+$pdfs = $post->attachments->ofType('pdf');
+
+// Get only videos
+$videos = $post->attachments->ofType('video');
+
+// Get only documents
+$documents = $post->attachments->ofType('document');
 ```
 
 ## Model Trait
