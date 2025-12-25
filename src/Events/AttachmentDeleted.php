@@ -8,7 +8,8 @@ use NiftyCo\Attachments\Attachment;
 
 class AttachmentDeleted
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
+    use SerializesModels;
 
     /**
      * Create a new event instance.
@@ -18,7 +19,5 @@ class AttachmentDeleted
         public ?string $modelClass = null,
         public ?string $modelId = null,
         public ?string $attribute = null
-    ) {
-    }
+    ) {}
 }
-

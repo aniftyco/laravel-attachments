@@ -163,4 +163,3 @@ trait HasAttachments
         return $totalSize;
     }
 }
-

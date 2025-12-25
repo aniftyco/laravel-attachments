@@ -5,8 +5,6 @@ namespace Tests\Fixtures;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use NiftyCo\Attachments\Attachment;
-use NiftyCo\Attachments\Attachments;
 use NiftyCo\Attachments\Casts\AsAttachment;
 use NiftyCo\Attachments\Casts\AsAttachments;
 
@@ -41,4 +39,3 @@ class Post extends Model
         Schema::dropIfExists('posts');
     }
 }
-

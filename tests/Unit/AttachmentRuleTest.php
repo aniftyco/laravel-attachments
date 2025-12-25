@@ -9,7 +9,7 @@ it('validates file successfully with no restrictions', function () {
 
     $validator = Validator::make(
         ['file' => $file],
-        ['file' => new AttachmentRule()]
+        ['file' => new AttachmentRule]
     );
 
     expect($validator->passes())->toBeTrue();
@@ -18,7 +18,7 @@ it('validates file successfully with no restrictions', function () {
 it('fails validation when value is not a file', function () {
     $validator = Validator::make(
         ['file' => 'not a file'],
-        ['file' => new AttachmentRule()]
+        ['file' => new AttachmentRule]
     );
 
     expect($validator->fails())->toBeTrue();
@@ -156,4 +156,3 @@ it('supports maxSize method in bytes', function () {
 
     expect($validator->fails())->toBeTrue();
 });
-

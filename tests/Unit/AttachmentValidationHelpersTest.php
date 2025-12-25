@@ -125,4 +125,3 @@ it('detects various document formats', function () {
         expect($attachment->isDocument())->toBeTrue("Failed for $ext");
     }
 });
-

@@ -82,4 +82,3 @@ class AttachmentColumn extends ImageColumn
         }, shouldOpenInNewTab: true);
     }
 }
-

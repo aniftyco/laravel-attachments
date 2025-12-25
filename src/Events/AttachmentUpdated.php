@@ -8,7 +8,8 @@ use NiftyCo\Attachments\Attachment;
 
 class AttachmentUpdated
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
+    use SerializesModels;
 
     /**
      * Create a new event instance.
@@ -19,7 +20,5 @@ class AttachmentUpdated
         public ?string $modelClass = null,
         public ?string $modelId = null,
         public ?string $attribute = null
-    ) {
-    }
+    ) {}
 }
-

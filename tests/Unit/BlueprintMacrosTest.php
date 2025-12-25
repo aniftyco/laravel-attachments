@@ -104,4 +104,3 @@ it('can add multiple attachment columns', function () {
 
     Schema::dropIfExists('test_table');
 });
-

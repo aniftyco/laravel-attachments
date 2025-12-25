@@ -147,4 +147,3 @@ trait InteractsWithAttachments
         return $attachments;
     }
 }
-
