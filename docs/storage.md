@@ -179,7 +179,7 @@ $user->avatar = Attachment::fromFile(
 );
 
 // Access via URL
-echo $user->avatar->url; // https://example.com/storage/avatars/abc123.jpg
+echo $user->avatar->url(); // https://example.com/storage/avatars/abc123.jpg
 ```
 
 ### Private Files

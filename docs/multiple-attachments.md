@@ -138,7 +138,7 @@ $count = $post->images->count();
 
 ```php
 foreach ($post->images as $image) {
-    echo $image->url;
+    echo $image->url();
     echo $image->readableSize();
 }
 ```

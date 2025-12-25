@@ -232,7 +232,7 @@ Since `Attachments` extends Laravel's `Collection`, all standard collection meth
 ```php
 // Loop through attachments
 foreach ($post->images as $image) {
-    echo $image->url;
+    echo $image->url();
 }
 
 // Each
@@ -258,7 +258,7 @@ $jpegs = $post->images->where('mime', 'image/jpeg');
 
 ```php
 // Map
-$urls = $post->images->map(fn($img) => $img->url);
+$urls = $post->images->map(fn($img) => $img->url());
 
 // Pluck
 $names = $post->images->pluck('name');
@@ -383,7 +383,7 @@ $largeImages->each(function ($image) {
 // Get all image URLs
 $urls = $post->images
     ->filter(fn($img) => $img->isImage())
-    ->map(fn($img) => $img->url)
+    ->map(fn($img) => $img->url())
     ->values();
 ```
 

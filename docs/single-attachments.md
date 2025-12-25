@@ -137,8 +137,7 @@ $avatar->mimeType();  // MIME type (e.g., "image/jpeg")
 $avatar->extname();   // File extension (e.g., "jpg")
 
 // URLs
-$avatar->url;       // Public URL
-$avatar->url();     // Same as above
+$avatar->url();     // Public URL
 
 // Human-readable size
 $avatar->readableSize(); // "1.5 MB"
@@ -221,7 +220,7 @@ Attachments can be null:
 ```php
 // Check if attachment exists
 if ($user->avatar) {
-    echo $user->avatar->url;
+    echo $user->avatar->url();
 }
 
 // Set to null

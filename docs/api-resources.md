@@ -18,15 +18,15 @@ return $resource;
 
 ```json
 {
-    "url": "https://example.com/storage/avatars/abc123.jpg",
-    "name": "abc123.jpg",
-    "size": 153600,
-    "mime": "image/jpeg",
-    "readable_size": "150 KB",
-    "metadata": {
-        "original_name": "profile.jpg",
-        "uploaded_at": "2024-01-15T10:30:00Z"
-    }
+  "url": "https://example.com/storage/avatars/abc123.jpg",
+  "name": "abc123.jpg",
+  "size": 153600,
+  "mime": "image/jpeg",
+  "readable_size": "150 KB",
+  "metadata": {
+    "original_name": "profile.jpg",
+    "uploaded_at": "2024-01-15T10:30:00Z"
+  }
 }
 ```
 
@@ -46,22 +46,22 @@ return $collection;
 
 ```json
 {
-    "data": [
-        {
-            "url": "https://example.com/storage/posts/image1.jpg",
-            "name": "image1.jpg",
-            "size": 204800,
-            "mime": "image/jpeg",
-            "readable_size": "200 KB"
-        },
-        {
-            "url": "https://example.com/storage/posts/image2.jpg",
-            "name": "image2.jpg",
-            "size": 307200,
-            "mime": "image/jpeg",
-            "readable_size": "300 KB"
-        }
-    ]
+  "data": [
+    {
+      "url": "https://example.com/storage/posts/image1.jpg",
+      "name": "image1.jpg",
+      "size": 204800,
+      "mime": "image/jpeg",
+      "readable_size": "200 KB"
+    },
+    {
+      "url": "https://example.com/storage/posts/image2.jpg",
+      "name": "image2.jpg",
+      "size": 307200,
+      "mime": "image/jpeg",
+      "readable_size": "300 KB"
+    }
+  ]
 }
 ```
 
@@ -93,16 +93,16 @@ Response:
 
 ```json
 {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "avatar": {
-        "url": "https://example.com/storage/avatars/abc123.jpg",
-        "name": "abc123.jpg",
-        "size": 153600,
-        "mime": "image/jpeg",
-        "readable_size": "150 KB"
-    }
+  "id": 1,
+  "name": "John Doe",
+  "email": "john@example.com",
+  "avatar": {
+    "url": "https://example.com/storage/avatars/abc123.jpg",
+    "name": "abc123.jpg",
+    "size": 153600,
+    "mime": "image/jpeg",
+    "readable_size": "150 KB"
+  }
 }
 ```
 
@@ -132,20 +132,20 @@ Response:
 
 ```json
 {
-    "id": 1,
-    "title": "My Post",
-    "content": "Post content...",
-    "images": {
-        "data": [
-            {
-                "url": "https://example.com/storage/posts/image1.jpg",
-                "name": "image1.jpg",
-                "size": 204800,
-                "mime": "image/jpeg",
-                "readable_size": "200 KB"
-            }
-        ]
-    }
+  "id": 1,
+  "title": "My Post",
+  "content": "Post content...",
+  "images": {
+    "data": [
+      {
+        "url": "https://example.com/storage/posts/image1.jpg",
+        "name": "image1.jpg",
+        "size": 204800,
+        "mime": "image/jpeg",
+        "readable_size": "200 KB"
+      }
+    ]
+  }
 }
 ```
 
@@ -201,14 +201,14 @@ Response:
 
 ```json
 {
-    "url": "https://example.com/storage/avatars/abc123.jpg",
-    "name": "abc123.jpg",
-    "size": 153600,
-    "mime": "image/jpeg",
-    "readable_size": "150 KB",
-    "thumbnail_url": "https://example.com/storage/thumbnails/abc123.jpg",
-    "is_processed": true,
-    "uploaded_by": 1
+  "url": "https://example.com/storage/avatars/abc123.jpg",
+  "name": "abc123.jpg",
+  "size": 153600,
+  "mime": "image/jpeg",
+  "readable_size": "150 KB",
+  "thumbnail_url": "https://example.com/storage/thumbnails/abc123.jpg",
+  "is_processed": true,
+  "uploaded_by": 1
 }
 ```
 
@@ -224,8 +224,8 @@ class MinimalAttachmentResource extends BaseResource
     public function toArray($request): array
     {
         return [
-            'url' => $this->url,
-            'name' => $this->name,
+            'url' => $this->url(),
+            'name' => $this->name(),
         ];
     }
 }
@@ -245,12 +245,12 @@ class SecureAttachmentResource extends BaseResource
     public function toArray($request): array
     {
         $data = parent::toArray($request);
-        
+
         // Replace public URL with temporary URL
         if ($this->disk === 's3-private') {
             $data['url'] = $this->temporaryUrl(now()->addHour());
         }
-        
+
         return $data;
     }
 }
@@ -271,7 +271,7 @@ class AttachmentController extends Controller
     public function index()
     {
         $attachments = Attachment::paginate(15);
-        
+
         return new AttachmentCollection($attachments);
     }
 }
@@ -354,8 +354,8 @@ class AdminAttachmentResource extends AttachmentResource { }
 public function toArray($request): array
 {
     return [
-        'url' => $this->url,
-        'name' => $this->name,
+        'url' => $this->url(),
+        'name' => $this->name(),
     ];
 }
 
@@ -377,4 +377,3 @@ public function toArray($request): array
 - Learn about [Filament Integration](filament.md)
 - Explore [Testing](testing.md)
 - Configure [Events](events.md)
-

@@ -8,9 +8,6 @@ For files stored on public disks, you can generate public URLs:
 
 ```php
 // Get the URL
-$url = $user->avatar->url;
-
-// Or use the method
 $url = $user->avatar->url();
 
 // Example: https://example.com/storage/avatars/abc123.jpg
@@ -126,7 +123,7 @@ AWS_CDN_URL=https://cdn.example.com
 Now all URLs will use the CDN:
 
 ```php
-$user->avatar->url;
+$user->avatar->url();
 // https://cdn.example.com/avatars/abc123.jpg
 ```
 
@@ -137,7 +134,7 @@ $user->avatar->url;
 ```php
 $user->avatar = Attachment::fromFile($file, disk: 'public', folder: 'avatars');
 
-echo $user->avatar->url;
+echo $user->avatar->url();
 // https://example.com/storage/avatars/abc123.jpg
 ```
 
@@ -146,7 +143,7 @@ echo $user->avatar->url;
 ```php
 $user->avatar = Attachment::fromFile($file, disk: 's3', folder: 'avatars');
 
-echo $user->avatar->url;
+echo $user->avatar->url();
 // https://bucket-name.s3.amazonaws.com/avatars/abc123.jpg
 ```
 
@@ -154,7 +151,7 @@ echo $user->avatar->url;
 
 ```php
 // With CDN configured
-echo $user->avatar->url;
+echo $user->avatar->url();
 // https://cdn.example.com/avatars/abc123.jpg
 ```
 
@@ -173,7 +170,7 @@ echo $user->document->temporaryUrl(now()->addHour());
 
 ```blade
 {{-- Display image --}}
-<img src="{{ $user->avatar->url }}" alt="Avatar">
+<img src="{{ $user->avatar->url() }}" alt="Avatar">
 
 {{-- Download link --}}
 <a href="{{ $user->document->temporaryUrl(now()->addHour()) }}">
@@ -182,7 +179,7 @@ echo $user->document->temporaryUrl(now()->addHour());
 
 {{-- Conditional rendering --}}
 @if($user->avatar)
-    <img src="{{ $user->avatar->url }}" alt="Avatar">
+    <img src="{{ $user->avatar->url() }}" alt="Avatar">
 @else
     <img src="/images/default-avatar.png" alt="Default Avatar">
 @endif
@@ -193,7 +190,7 @@ echo $user->document->temporaryUrl(now()->addHour());
 ```blade
 <div class="gallery">
     @foreach($post->images as $image)
-        <img src="{{ $image->url }}" alt="Post image">
+        <img src="{{ $image->url() }}" alt="Post image">
     @endforeach
 </div>
 ```
@@ -258,11 +255,11 @@ return $invoice->temporaryUrl(now()->addMinutes(15));
 
 // Good: Public avatars with public URLs
 $avatar = Attachment::fromFile($file, disk: 'public', folder: 'avatars');
-return $avatar->url;
+return $avatar->url();
 
 // Bad: Sensitive documents on public disk
 $invoice = Attachment::fromFile($file, disk: 'public', folder: 'invoices');
-return $invoice->url; // Anyone can access!
+return $invoice->url(); // Anyone can access!
 ```
 
 ## Troubleshooting
