@@ -32,7 +32,9 @@
     "orchestra/testbench": "^10.0",
     "pestphp/pest": "^4.0",
     "illuminate/support": "^12.0",
-    "laravel/pint": "^1.26"
+    "laravel/pint": "^1.26",
+    "filament/forms": "^4.3",
+    "filament/tables": "^4.3"
   },
   "autoload-dev": {
     "psr-4": {
