@@ -193,7 +193,7 @@ class Attachments extends Collection
      */
     public function totalSize(): int
     {
-        return $this->sum(fn (Attachment $attachment) => $attachment->size ?? 0);
+        return $this->sum(fn (Attachment $attachment) => $attachment->size() ?? 0);
     }
 
     /**

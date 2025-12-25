@@ -13,9 +13,12 @@ trait InteractsWithAttachments
      */
     public function assertAttachmentExists(Attachment $attachment): void
     {
+        $disk = $attachment->disk();
+        $path = $attachment->path();
+
         $this->assertTrue(
-            Storage::disk($attachment->disk)->exists($attachment->path()),
-            "Failed asserting that attachment [{$attachment->path()}] exists on disk [{$attachment->disk}]."
+            Storage::disk($disk)->exists($path),
+            "Failed asserting that attachment [{$path}] exists on disk [{$disk}]."
         );
     }
 
@@ -24,9 +27,12 @@ trait InteractsWithAttachments
      */
     public function assertAttachmentMissing(Attachment $attachment): void
     {
+        $disk = $attachment->disk();
+        $path = $attachment->path();
+
         $this->assertFalse(
-            Storage::disk($attachment->disk)->exists($attachment->path()),
-            "Failed asserting that attachment [{$attachment->path()}] does not exist on disk [{$attachment->disk}]."
+            Storage::disk($disk)->exists($path),
+            "Failed asserting that attachment [{$path}] does not exist on disk [{$disk}]."
         );
     }
 

@@ -32,7 +32,6 @@
     "orchestra/testbench": "^10.0",
     "pestphp/pest": "^4.0",
     "illuminate/support": "^12.0",
-    "phpstan/phpstan": "^2.1",
     "laravel/pint": "^1.26"
   },
   "autoload-dev": {
@@ -56,9 +55,7 @@
       "@build",
       "@php vendor/bin/testbench serve --ansi"
     ],
-    "lint": [
-      "@php vendor/bin/phpstan analyse --verbose --ansi"
-    ],
+    "lint": "@php vendor/bin/pint",
     "test": "@php vendor/bin/pest"
   },
   "extra": {

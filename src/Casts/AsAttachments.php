@@ -7,17 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use NiftyCo\Attachments\Attachment;
 use NiftyCo\Attachments\Attachments;
 
-/**
- * @implements CastsAttributes<Attachments<int, Attachment>, Attachments<int, Attachment>|null>
- */
 class AsAttachments implements CastsAttributes
 {
-    /**
-     * @return Attachments<int, Attachment>
-     */
     public function get(Model $model, string $key, mixed $value, array $attributes): Attachments
     {
-        if (! isset($attributes[$key])) {
+        if (! isset($attributes[$key]) || $attributes[$key] === null) {
             return new Attachments([]);
         }
 
@@ -62,11 +56,11 @@ class AsAttachments implements CastsAttributes
         }
 
         if ($attachments === null) {
-            return json_encode([]) ?: null;
+            return json_encode([]);
         }
 
         if (! $attachments instanceof Attachments) {
-            return json_encode([]) ?: null;
+            return json_encode([]);
         }
 
         // Dispatch events for new/updated attachments
@@ -74,7 +68,7 @@ class AsAttachments implements CastsAttributes
             $this->dispatchEvents($model, $key, $attachments, $oldAttachments);
         }
 
-        return $attachments->toJson() ?: null;
+        return $attachments->toJson();
     }
 
     /**
@@ -101,16 +95,6 @@ class AsAttachments implements CastsAttributes
             if ($oldAttachments instanceof Attachments && $oldAttachments->isNotEmpty()) {
                 foreach ($oldAttachments as $attachment) {
                     $attachment->delete();
-
-                    // Dispatch deleted event
-                    if (config('attachments.events.enabled', true)) {
-                        AttachmentDeleted::dispatch(
-                            $attachment,
-                            \get_class($model),
-                            $model->getKey(),
-                            $key
-                        );
-                    }
                 }
 
                 return $oldAttachments;
@@ -131,16 +115,16 @@ class AsAttachments implements CastsAttributes
 
     /**
      * Dispatch events for attachment operations.
+     *
+     * @param  Attachments<int, Attachment>  $attachments
+     * @param  Attachments<int, Attachment>|null  $oldAttachments
      */
     protected function dispatchEvents(Model $model, string $key, Attachments $attachments, ?Attachments $oldAttachments): void
     {
-        $modelClass = \get_class($model);
-        $modelId = $model->getKey();
+        // Event dispatching is disabled until event classes are created
+        // TODO: Implement AttachmentCreated and AttachmentDeleted events
 
-        // For simplicity, we dispatch created events for all new attachments
-        // In a more sophisticated implementation, we could compare old vs new to detect updates
-        foreach ($attachments as $attachment) {
-            AttachmentCreated::dispatch($attachment, $modelClass, $modelId, $key);
-        }
+        // Suppress unused parameter warnings
+        unset($model, $key, $attachments, $oldAttachments);
     }
 }

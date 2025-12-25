@@ -18,19 +18,22 @@ class AttachmentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        /** @var Attachment $attachment */
+        $attachment = $this->resource;
+
         return [
-            'name' => $this->name,
-            'path' => $this->path(),
-            'url' => $this->url(),
-            'size' => $this->size,
-            'readable_size' => $this->readableSize(),
-            'mime' => $this->mime,
-            'extension' => $this->extname,
-            'disk' => $this->disk,
-            'folder' => $this->folder,
-            'metadata' => $this->metadata,
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+            'name' => $attachment->name(),
+            'path' => $attachment->path(),
+            'url' => $attachment->url(),
+            'size' => $attachment->size(),
+            'readable_size' => $attachment->readableSize(),
+            'mime' => $attachment->mimeType(),
+            'extension' => $attachment->extname(),
+            'disk' => $attachment->disk(),
+            'folder' => $attachment->folder(),
+            'metadata' => $attachment->metadata(),
+            'created_at' => $attachment->getMeta('created_at')?->toISOString(),
+            'updated_at' => $attachment->getMeta('updated_at')?->toISOString(),
         ];
     }
 
