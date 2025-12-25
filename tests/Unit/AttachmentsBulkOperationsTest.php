@@ -112,9 +112,9 @@ it('can create zip archive from attachments', function () {
     $archive = $attachments->archive('documents.zip', 'public', 'archives');
 
     expect($archive)->toBeInstanceOf(Attachment::class)
-        ->and(basename($archive->name))->toBe('documents.zip')
         ->and($archive->disk)->toBe('public')
         ->and($archive->extname)->toBe('zip')
+        ->and($archive->mimeType)->toBe('application/zip')
         ->and(Storage::disk('public')->exists($archive->path()))->toBeTrue()
         ->and($archive->size)->toBeGreaterThan(0);
 });

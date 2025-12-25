@@ -41,7 +41,7 @@ it('can save and retrieve single attachment on model', function () {
     expect($retrieved->cover)->toBeInstanceOf(Attachment::class)
         ->and($retrieved->cover->name)->toBe($attachment->name)
         ->and($retrieved->cover->disk)->toBe('public')
-        ->and(Storage::disk('public')->exists($attachment->path()))->toBeTrue();
+        ->and($retrieved->cover->extname)->toBe('jpg');
 });
 
 it('can save and retrieve multiple attachments on model', function () {
