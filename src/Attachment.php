@@ -18,12 +18,8 @@ class Attachment implements Jsonable, JsonSerializable
         UploadedFile $file,
         ?string $disk = null,
         ?string $folder = null,
-        mixed $validate = null,
         array $metadata = []
     ): static {
-        // Validate file
-        FileValidator::validate($file, $validate);
-
         // Use config defaults
         $disk = $disk ?? config('attachments.disk', config('filesystems.default'));
         $folder = $folder ?? config('attachments.folder', 'attachments');
@@ -41,6 +37,47 @@ class Attachment implements Jsonable, JsonSerializable
                 size: $file->getSize(),
                 extname: $file->extension(),
                 mimeType: $file->getMimeType()
+            );
+
+            $attachment->metadata = $metadata;
+
+            return $attachment;
+        } catch (\Exception $e) {
+            throw StorageException::uploadFailed($e->getMessage());
+        }
+    }
+
+    /**
+     * Create an attachment from an existing file path in storage.
+     *
+     * @param  string  $path  The file path in storage
+     * @param  string|null  $disk  The storage disk (defaults to config)
+     * @param  array  $metadata  Additional metadata
+     *
+     * @throws StorageException
+     */
+    public static function fromPath(
+        string $path,
+        ?string $disk = null,
+        array $metadata = []
+    ): static {
+        $disk = $disk ?? config('attachments.disk', config('filesystems.default'));
+
+        try {
+            if (! Storage::disk($disk)->exists($path)) {
+                throw StorageException::uploadFailed("File does not exist at path: {$path}");
+            }
+
+            $size = Storage::disk($disk)->size($path);
+            $mimeType = Storage::disk($disk)->mimeType($path);
+            $extension = pathinfo($path, PATHINFO_EXTENSION);
+
+            $attachment = new static(
+                disk: $disk,
+                name: $path,
+                size: $size,
+                extname: $extension,
+                mimeType: $mimeType
             );
 
             $attachment->metadata = $metadata;
