@@ -20,6 +20,12 @@
 - 📡 **Events** - Listen to attachment lifecycle events (created, updated, deleted)
 - 🏷️ **Metadata** - Store custom metadata with attachments
 - 🔧 **File Operations** - Move, rename, duplicate, and manage attachments easily
+- 📊 **Bulk Operations** - Delete, move, copy, and archive multiple attachments at once
+- 🧪 **Testing Helpers** - Comprehensive testing utilities and assertions
+- 🎨 **Filament Integration** - Ready-to-use form fields and table columns
+- 🌐 **API Resources** - Transform attachments for JSON responses
+- 🛠️ **Database Helpers** - Blueprint macros for easy migration setup
+- 🎭 **Model Trait** - Convenient methods for working with attachments
 
 ## Installation
 
@@ -243,6 +249,57 @@ $post->images = $post->images->filter(fn($img) => $img->name !== 'old.jpg');
 $post->save();
 ```
 
+## Model Trait
+
+The `HasAttachments` trait provides convenient methods for working with attachments on your models:
+
+```php
+use NiftyCo\Attachments\Concerns\HasAttachments;
+
+class Post extends Model
+{
+    use HasAttachments;
+
+    protected function casts(): array
+    {
+        return [
+            'cover' => AsAttachment::class,
+            'images' => AsAttachments::class,
+        ];
+    }
+}
+```
+
+### Available Methods
+
+```php
+// Attach a single file
+$post->attachFile('cover', $uploadedFile, disk: 'public', folder: 'covers');
+
+// Attach multiple files
+$post->attachFiles('images', [$file1, $file2, $file3], disk: 'public', folder: 'images');
+
+// Add to existing collection
+$post->addAttachment('images', $newFile, disk: 'public', folder: 'images');
+
+// Remove attachment by name
+$post->removeAttachment('images', 'old-photo.jpg');
+
+// Clear all attachments (optionally delete files)
+$post->clearAttachments('images', deleteFiles: true);
+
+// Get all attachment attribute names
+$attributes = $post->getAttachmentAttributes(); // ['cover', 'images']
+
+// Check if model has any attachments
+if ($post->hasAttachments()) {
+    // Model has attachments
+}
+
+// Get total size of all attachments
+$totalSize = $post->totalAttachmentsSize(); // in bytes
+```
+
 ## Automatic File Cleanup
 
 The package provides automatic file cleanup when models are deleted or attachments are replaced.
@@ -299,182 +356,206 @@ return [
 ];
 ```
 
-## Validation
+## Database Helpers
 
-The package provides a fluent validation rule for easy file validation in form requests:
+The package provides convenient Blueprint macros for creating attachment columns in your migrations:
 
 ```php
-use NiftyCo\Attachments\Rules\AttachmentRule;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-class UserStoreRequest extends FormRequest
+Schema::create('users', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+
+    // Single attachment column
+    $table->attachment('avatar');
+
+    // Multiple attachments column
+    $table->attachments('photos');
+
+    $table->timestamps();
+});
+```
+
+You can also specify custom column names:
+
+```php
+$table->attachment('profile_picture');
+$table->attachments('gallery_images');
+```
+
+To drop attachment columns:
+
+```php
+Schema::table('users', function (Blueprint $table) {
+    $table->dropAttachment('avatar');
+    $table->dropAttachments('photos');
+});
+```
+
+## Testing Helpers
+
+The package includes a testing trait with helpful assertions and factory methods:
+
+```php
+use NiftyCo\Attachments\Testing\InteractsWithAttachments;
+
+class UserTest extends TestCase
 {
-    public function rules(): array
+    use InteractsWithAttachments;
+
+    public function test_user_can_upload_avatar()
     {
-        return [
-            'avatar' => ['required', AttachmentRule::make()->images()->maxSizeMb(5)],
-            'resume' => ['required', AttachmentRule::make()->mimes(['pdf', 'doc', 'docx'])->maxSizeMb(10)],
-            'photos' => ['required', 'array'],
-            'photos.*' => [AttachmentRule::make()->images()->maxSizeMb(2)],
-        ];
+        $user = User::factory()->create();
+        $attachment = $this->createFakeAttachment('avatar.jpg', 'public', 'avatars');
+
+        $user->avatar = $attachment;
+        $user->save();
+
+        // Assert attachment exists in storage
+        $this->assertAttachmentExists($user->avatar);
+
+        // Assert attachment properties
+        $this->assertAttachmentIsImage($user->avatar);
+        $this->assertAttachmentMimeType($user->avatar, 'image/jpeg');
+
+        // Assert metadata
+        $user->avatar->withMeta('author', 'John');
+        $this->assertAttachmentHasMeta($user->avatar, 'author', 'John');
     }
 }
 ```
 
-### Available Validation Methods
+### Available Assertions
 
 ```php
-AttachmentRule::make()
-    ->maxSize(1024)           // Max size in kilobytes
-    ->maxSizeKb(1024)         // Max size in kilobytes
-    ->maxSizeMb(5)            // Max size in megabytes
-    ->mimes(['jpg', 'png'])   // Allowed MIME types
-    ->extensions(['jpg', 'png']) // Allowed extensions
-    ->images()                // Shorthand for common image types
-    ->documents();            // Shorthand for common document types
+$this->assertAttachmentExists($attachment);
+$this->assertAttachmentMissing($attachment);
+$this->assertAttachmentContent($attachment, 'expected content');
+$this->assertAttachmentSize($attachment, 1024);
+$this->assertAttachmentMimeType($attachment, 'image/jpeg');
+$this->assertAttachmentIsImage($attachment);
+$this->assertAttachmentIsPdf($attachment);
+$this->assertAttachmentHasMeta($attachment, 'key', 'value');
 ```
 
-### Validation Helper Methods
-
-The `Attachment` class also provides helper methods for checking file types:
+### Factory Methods
 
 ```php
-if ($user->avatar->isImage()) {
-    // It's an image
-}
+// Create a single fake attachment
+$attachment = $this->createFakeAttachment('test.jpg', 'public', 'test', 100);
 
-if ($document->file->isPdf()) {
-    // It's a PDF
-}
-
-// Available methods:
-$attachment->isImage();    // jpg, jpeg, png, gif, webp, svg
-$attachment->isPdf();      // pdf
-$attachment->isVideo();    // mp4, mov, avi, wmv, flv, webm
-$attachment->isAudio();    // mp3, wav, ogg, flac, aac
-$attachment->isDocument(); // pdf, doc, docx, xls, xlsx, ppt, pptx
+// Create multiple fake attachments
+$attachments = $this->createFakeAttachments(5, 'public', 'test');
 ```
 
-### Filename Sanitization
+## API Resources
 
-For security, you can sanitize filenames before storing:
+Transform attachments for API responses using the provided resource classes:
 
 ```php
-use NiftyCo\Attachments\Attachment;
+use NiftyCo\Attachments\Http\Resources\AttachmentResource;
+use NiftyCo\Attachments\Http\Resources\AttachmentCollection;
 
-$safeName = Attachment::sanitizeFilename($unsafeName);
-// Removes special characters, spaces, and potential security risks
+// Single attachment
+return new AttachmentResource($user->avatar);
+
+// Multiple attachments
+return new AttachmentCollection($post->images);
 ```
 
-## Events
+### Resource Output
 
-The package dispatches events for attachment operations, allowing you to hook into the attachment lifecycle:
-
-### Available Events
-
-```php
-use NiftyCo\Attachments\Events\AttachmentCreated;
-use NiftyCo\Attachments\Events\AttachmentUpdated;
-use NiftyCo\Attachments\Events\AttachmentDeleted;
-```
-
-### Event Properties
-
-All events contain the following properties:
-
-```php
-class AttachmentCreated
+```json
 {
-    public function __construct(
-        public Attachment $attachment,  // The attachment instance
-        public string $modelClass,      // The model class name
-        public mixed $modelId,          // The model ID
-        public string $attribute        // The attribute name
-    ) {}
-}
-
-class AttachmentUpdated
-{
-    public function __construct(
-        public Attachment $attachment,     // The new attachment
-        public ?Attachment $oldAttachment, // The old attachment (if any)
-        public string $modelClass,
-        public mixed $modelId,
-        public string $attribute
-    ) {}
-}
-
-class AttachmentDeleted
-{
-    public function __construct(
-        public Attachment $attachment,
-        public string $modelClass,
-        public mixed $modelId,
-        public string $attribute
-    ) {}
+  "name": "photo.jpg",
+  "path": "photos/photo.jpg",
+  "url": "https://example.com/storage/photos/photo.jpg",
+  "size": 102400,
+  "readable_size": "100.00 KB",
+  "mime": "image/jpeg",
+  "extension": "jpg",
+  "disk": "public",
+  "folder": "photos",
+  "metadata": {
+    "author": "John Doe"
+  },
+  "created_at": "2024-01-15T10:30:00.000000Z",
+  "updated_at": "2024-01-15T10:30:00.000000Z",
+  "type": "image"
 }
 ```
 
-### Listening to Events
+### Collection Output
 
-Create a listener for attachment events:
-
-```php
-namespace App\Listeners;
-
-use NiftyCo\Attachments\Events\AttachmentCreated;
-
-class ProcessUploadedAttachment
+```json
 {
-    public function handle(AttachmentCreated $event): void
+  "data": [
     {
-        // Process the uploaded attachment
-        $attachment = $event->attachment;
-        $modelClass = $event->modelClass;
-        $modelId = $event->modelId;
-
-        // Example: Generate thumbnails for images
-        if ($attachment->isImage()) {
-            // Generate thumbnail...
-        }
-
-        // Example: Scan for viruses
-        // VirusScanner::scan($attachment->path());
-
-        // Example: Log the upload
-        Log::info("Attachment uploaded", [
-            'model' => $modelClass,
-            'id' => $modelId,
-            'file' => $attachment->name,
-        ]);
+      /* attachment resource */
+    },
+    {
+      /* attachment resource */
     }
+  ],
+  "meta": {
+    "total": 2,
+    "total_size": 204800,
+    "total_readable_size": "200.00 KB"
+  }
 }
 ```
 
-Register the listener in your `EventServiceProvider`:
+## Filament Integration
+
+The package provides Filament form fields and table columns for easy integration:
+
+### Form Fields
 
 ```php
-use NiftyCo\Attachments\Events\AttachmentCreated;
-use App\Listeners\ProcessUploadedAttachment;
+use NiftyCo\Attachments\Filament\AttachmentField;
 
-protected $listen = [
-    AttachmentCreated::class => [
-        ProcessUploadedAttachment::class,
-    ],
-];
+// Single attachment
+AttachmentField::make('avatar')
+    ->attachmentDisk('public')
+    ->attachmentFolder('avatars')
+    ->images()
+    ->maxSize(5120);
+
+// Multiple attachments
+AttachmentField::multiple('photos')
+    ->attachmentDisk('public')
+    ->attachmentFolder('photos')
+    ->images()
+    ->maxFiles(10);
+
+// Document uploads
+AttachmentField::make('resume')
+    ->documents()
+    ->maxSize(10240);
 ```
 
-### Disabling Events
-
-You can disable events globally in the configuration:
+### Table Columns
 
 ```php
-// config/attachments.php
+use NiftyCo\Attachments\Filament\AttachmentColumn;
 
-return [
-    'events' => [
-        'enabled' => false,
-    ],
-];
+// Display as image
+AttachmentColumn::make('avatar')
+    ->circular();
+
+// Display as text (filename)
+AttachmentColumn::make('document')
+    ->asText();
+
+// Display as size
+AttachmentColumn::make('file')
+    ->asSize();
+
+// Make downloadable
+AttachmentColumn::make('resume')
+    ->downloadable();
 ```
 
 ## Configuration
@@ -543,34 +624,6 @@ return [
     |
     */
     'temporary_url_expiration' => env('ATTACHMENTS_TEMP_URL_EXPIRATION', 60),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Events
-    |--------------------------------------------------------------------------
-    |
-    | Enable or disable events for attachment operations.
-    | When enabled, events will be dispatched for file uploads, deletions, etc.
-    |
-    */
-    'events' => [
-        'enabled' => env('ATTACHMENTS_EVENTS_ENABLED', true),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | File Validation
-    |--------------------------------------------------------------------------
-    |
-    | Default validation rules for uploaded files.
-    | These rules will be applied when using Attachment::fromFile()
-    |
-    */
-    'validation' => [
-        'file',
-        'max:10240', // 10MB
-        'mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,zip,rar',
-    ],
 ];
 ```
 
