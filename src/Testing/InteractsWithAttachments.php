@@ -57,7 +57,7 @@ trait InteractsWithAttachments
     {
         $this->assertEquals(
             $expectedSize,
-            $attachment->size,
+            $attachment->size(),
             "Failed asserting that attachment [{$attachment->path()}] has size [{$expectedSize}]."
         );
     }
@@ -69,7 +69,7 @@ trait InteractsWithAttachments
     {
         $this->assertEquals(
             $expectedMimeType,
-            $attachment->mime,
+            $attachment->mimeType(),
             "Failed asserting that attachment [{$attachment->path()}] has MIME type [{$expectedMimeType}]."
         );
     }

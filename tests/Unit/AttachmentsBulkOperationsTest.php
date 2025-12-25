@@ -64,7 +64,7 @@ it('can move all attachments to different disk', function () {
 
     // New files should exist on s3
     foreach ($moved as $attachment) {
-        expect($attachment->disk)->toBe('s3')
+        expect($attachment->disk())->toBe('s3')
             ->and(Storage::disk('s3')->exists($attachment->path()))->toBeTrue();
     }
 });
@@ -93,7 +93,7 @@ it('can copy all attachments to different disk', function () {
 
     // Copied files should exist on backup disk
     foreach ($copied as $attachment) {
-        expect($attachment->disk)->toBe('backup')
+        expect($attachment->disk())->toBe('backup')
             ->and(Storage::disk('backup')->exists($attachment->path()))->toBeTrue();
     }
 });
@@ -112,11 +112,11 @@ it('can create zip archive from attachments', function () {
     $archive = $attachments->archive('documents.zip', 'public', 'archives');
 
     expect($archive)->toBeInstanceOf(Attachment::class)
-        ->and($archive->disk)->toBe('public')
-        ->and($archive->extname)->toBe('zip')
-        ->and($archive->mimeType)->toBe('application/zip')
+        ->and($archive->disk())->toBe('public')
+        ->and($archive->extname())->toBe('zip')
+        ->and($archive->mimeType())->toBe('application/zip')
         ->and(Storage::disk('public')->exists($archive->path()))->toBeTrue()
-        ->and($archive->size)->toBeGreaterThan(0);
+        ->and($archive->size())->toBeGreaterThan(0);
 });
 
 it('throws exception when creating archive from empty collection', function () {

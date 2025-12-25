@@ -128,8 +128,8 @@ it('resource handles null timestamps', function () {
 it('resource formats timestamps when present', function () {
     $file = UploadedFile::fake()->image('photo.jpg');
     $attachment = Attachment::fromFile($file, 'public', 'photos');
-    $attachment->created_at = now();
-    $attachment->updated_at = now();
+    $attachment = $attachment->setMeta('created_at', now());
+    $attachment = $attachment->setMeta('updated_at', now());
 
     $resource = new AttachmentResource($attachment);
     $array = $resource->toArray(request());

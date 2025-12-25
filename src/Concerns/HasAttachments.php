@@ -75,7 +75,7 @@ trait HasAttachments
         $attachments = $this->getAttribute($attribute);
 
         if ($attachments instanceof Attachments) {
-            $filtered = $attachments->filter(fn (Attachment $a) => $a->name !== $name);
+            $filtered = $attachments->filter(fn (Attachment $a) => $a->name() !== $name);
             $this->setAttribute($attribute, $filtered);
         }
 

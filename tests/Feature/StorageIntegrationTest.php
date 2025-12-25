@@ -15,9 +15,9 @@ it('can store file on public disk', function () {
 
     $attachment = Attachment::fromFile($file, 'public', 'images');
 
-    expect($attachment->disk)->toBe('public')
+    expect($attachment->disk())->toBe('public')
         ->and(Storage::disk('public')->exists($attachment->path()))->toBeTrue()
-        ->and($attachment->size)->toBeGreaterThan(0);
+        ->and($attachment->size())->toBeGreaterThan(0);
 });
 
 it('can store file on s3 disk', function () {
@@ -25,9 +25,9 @@ it('can store file on s3 disk', function () {
 
     $attachment = Attachment::fromFile($file, 's3', 'documents');
 
-    expect($attachment->disk)->toBe('s3')
+    expect($attachment->disk())->toBe('s3')
         ->and(Storage::disk('s3')->exists($attachment->path()))->toBeTrue()
-        ->and($attachment->extname)->toBe('pdf');
+        ->and($attachment->extname())->toBe('pdf');
 });
 
 it('can store file on local disk', function () {
@@ -35,7 +35,7 @@ it('can store file on local disk', function () {
 
     $attachment = Attachment::fromFile($file, 'local', 'files');
 
-    expect($attachment->disk)->toBe('local')
+    expect($attachment->disk())->toBe('local')
         ->and(Storage::disk('local')->exists($attachment->path()))->toBeTrue();
 });
 
@@ -49,10 +49,10 @@ it('can move attachment between disks', function () {
 
     $moved = $attachment->move('s3', 'archived');
 
-    expect($moved->disk)->toBe('s3')
+    expect($moved->disk())->toBe('s3')
         ->and(Storage::disk('public')->exists($originalPath))->toBeFalse()
         ->and(Storage::disk('s3')->exists($moved->path()))->toBeTrue()
-        ->and(basename($moved->name))->toBe(basename($attachment->name));
+        ->and(basename($moved->name()))->toBe(basename($attachment->name()));
 });
 
 it('can duplicate attachment to different disk', function () {
@@ -62,8 +62,8 @@ it('can duplicate attachment to different disk', function () {
     $duplicate = $attachment->duplicate('s3', 'backups');
 
     expect($duplicate)->toBeInstanceOf(Attachment::class)
-        ->and($duplicate->disk)->toBe('s3')
-        ->and($duplicate->name)->not->toBe($attachment->name)
+        ->and($duplicate->disk())->toBe('s3')
+        ->and($duplicate->name())->not->toBe($attachment->name())
         ->and(Storage::disk('public')->exists($attachment->path()))->toBeTrue()
         ->and(Storage::disk('s3')->exists($duplicate->path()))->toBeTrue();
 });
@@ -111,7 +111,7 @@ it('can get file url from storage', function () {
     $url = $attachment->url();
 
     expect($url)->toBeString()
-        ->and($url)->toContain($attachment->name);
+        ->and($url)->toContain($attachment->name());
 });
 
 it('can get temporary url for private files', function () {
@@ -141,7 +141,7 @@ it('handles large files correctly', function () {
 
     $attachment = Attachment::fromFile($file, 'public', 'uploads');
 
-    expect($attachment->size)->toBeGreaterThan(5000000)
+    expect($attachment->size())->toBeGreaterThan(5000000)
         ->and($attachment->readableSize())->toContain('MB')
         ->and(Storage::disk('public')->exists($attachment->path()))->toBeTrue();
 });
@@ -154,7 +154,7 @@ it('can rename attachment file', function () {
 
     $renamed = $attachment->rename('new-name');
 
-    expect(basename($renamed->name))->toBe('new-name.jpg')
+    expect(basename($renamed->name()))->toBe('new-name.jpg')
         ->and(Storage::disk('public')->exists($oldPath))->toBeFalse()
         ->and(Storage::disk('public')->exists($renamed->path()))->toBeTrue();
 });

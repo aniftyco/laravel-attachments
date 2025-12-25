@@ -39,7 +39,7 @@ it('can assert attachment size', function () {
     $file = UploadedFile::fake()->create('test.txt', 100); // 100KB
     $attachment = Attachment::fromFile($file, 'public', 'files');
 
-    $this->assertAttachmentSize($attachment, $attachment->size);
+    $this->assertAttachmentSize($attachment, $attachment->size());
 });
 
 it('can assert attachment mime type', function () {
@@ -75,8 +75,8 @@ it('can create fake attachment', function () {
     $attachment = $this->createFakeAttachment('test.jpg', 'public', 'test', 100);
 
     expect($attachment)->toBeInstanceOf(Attachment::class)
-        ->and($attachment->extname)->toBe('jpg')
-        ->and($attachment->disk)->toBe('public');
+        ->and($attachment->extname())->toBe('jpg')
+        ->and($attachment->disk())->toBe('public');
 
     $this->assertAttachmentExists($attachment);
 });
@@ -95,8 +95,8 @@ it('can create multiple fake attachments', function () {
 it('fake attachments have sequential names', function () {
     $attachments = $this->createFakeAttachments(3);
 
-    expect($attachments[0]->extname)->toBe('jpg')
-        ->and($attachments[1]->extname)->toBe('jpg')
-        ->and($attachments[2]->extname)->toBe('jpg')
+    expect($attachments[0]->extname())->toBe('jpg')
+        ->and($attachments[1]->extname())->toBe('jpg')
+        ->and($attachments[2]->extname())->toBe('jpg')
         ->and($attachments)->toHaveCount(3);
 });

@@ -25,7 +25,7 @@ class AttachmentCollection extends ResourceCollection
         // $this->resource is the original Attachments collection before wrapping
         $totalSize = 0;
         foreach ($this->resource as $attachment) {
-            $totalSize += $attachment->size ?? 0;
+            $totalSize += $attachment->size() ?? 0;
         }
 
         return [
