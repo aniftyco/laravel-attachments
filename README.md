@@ -12,11 +12,14 @@
 
 - 🎯 **Simple API** - Easy-to-use casts for single and multiple attachments
 - 🔄 **Automatic Cleanup** - Automatically delete files when models are deleted
-- ✅ **File Validation** - Built-in validation for file size, type, and extensions
+- ✅ **File Validation** - Fluent validation rule with built-in file type checking
 - 🔗 **URL Generation** - Generate public and temporary URLs for attachments
 - 📦 **Multiple Storage Disks** - Support for any Laravel filesystem disk
 - 🗂️ **Organized Storage** - Automatic folder organization with customizable paths
 - 🔒 **Type Safe** - Full type hints and IDE autocomplete support
+- 📡 **Events** - Listen to attachment lifecycle events (created, updated, deleted)
+- 🏷️ **Metadata** - Store custom metadata with attachments
+- 🔧 **File Operations** - Move, rename, duplicate, and manage attachments easily
 
 ## Installation
 
@@ -296,6 +299,184 @@ return [
 ];
 ```
 
+## Validation
+
+The package provides a fluent validation rule for easy file validation in form requests:
+
+```php
+use NiftyCo\Attachments\Rules\AttachmentRule;
+
+class UserStoreRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'avatar' => ['required', AttachmentRule::make()->images()->maxSizeMb(5)],
+            'resume' => ['required', AttachmentRule::make()->mimes(['pdf', 'doc', 'docx'])->maxSizeMb(10)],
+            'photos' => ['required', 'array'],
+            'photos.*' => [AttachmentRule::make()->images()->maxSizeMb(2)],
+        ];
+    }
+}
+```
+
+### Available Validation Methods
+
+```php
+AttachmentRule::make()
+    ->maxSize(1024)           // Max size in kilobytes
+    ->maxSizeKb(1024)         // Max size in kilobytes
+    ->maxSizeMb(5)            // Max size in megabytes
+    ->mimes(['jpg', 'png'])   // Allowed MIME types
+    ->extensions(['jpg', 'png']) // Allowed extensions
+    ->images()                // Shorthand for common image types
+    ->documents();            // Shorthand for common document types
+```
+
+### Validation Helper Methods
+
+The `Attachment` class also provides helper methods for checking file types:
+
+```php
+if ($user->avatar->isImage()) {
+    // It's an image
+}
+
+if ($document->file->isPdf()) {
+    // It's a PDF
+}
+
+// Available methods:
+$attachment->isImage();    // jpg, jpeg, png, gif, webp, svg
+$attachment->isPdf();      // pdf
+$attachment->isVideo();    // mp4, mov, avi, wmv, flv, webm
+$attachment->isAudio();    // mp3, wav, ogg, flac, aac
+$attachment->isDocument(); // pdf, doc, docx, xls, xlsx, ppt, pptx
+```
+
+### Filename Sanitization
+
+For security, you can sanitize filenames before storing:
+
+```php
+use NiftyCo\Attachments\Attachment;
+
+$safeName = Attachment::sanitizeFilename($unsafeName);
+// Removes special characters, spaces, and potential security risks
+```
+
+## Events
+
+The package dispatches events for attachment operations, allowing you to hook into the attachment lifecycle:
+
+### Available Events
+
+```php
+use NiftyCo\Attachments\Events\AttachmentCreated;
+use NiftyCo\Attachments\Events\AttachmentUpdated;
+use NiftyCo\Attachments\Events\AttachmentDeleted;
+```
+
+### Event Properties
+
+All events contain the following properties:
+
+```php
+class AttachmentCreated
+{
+    public function __construct(
+        public Attachment $attachment,  // The attachment instance
+        public string $modelClass,      // The model class name
+        public mixed $modelId,          // The model ID
+        public string $attribute        // The attribute name
+    ) {}
+}
+
+class AttachmentUpdated
+{
+    public function __construct(
+        public Attachment $attachment,     // The new attachment
+        public ?Attachment $oldAttachment, // The old attachment (if any)
+        public string $modelClass,
+        public mixed $modelId,
+        public string $attribute
+    ) {}
+}
+
+class AttachmentDeleted
+{
+    public function __construct(
+        public Attachment $attachment,
+        public string $modelClass,
+        public mixed $modelId,
+        public string $attribute
+    ) {}
+}
+```
+
+### Listening to Events
+
+Create a listener for attachment events:
+
+```php
+namespace App\Listeners;
+
+use NiftyCo\Attachments\Events\AttachmentCreated;
+
+class ProcessUploadedAttachment
+{
+    public function handle(AttachmentCreated $event): void
+    {
+        // Process the uploaded attachment
+        $attachment = $event->attachment;
+        $modelClass = $event->modelClass;
+        $modelId = $event->modelId;
+
+        // Example: Generate thumbnails for images
+        if ($attachment->isImage()) {
+            // Generate thumbnail...
+        }
+
+        // Example: Scan for viruses
+        // VirusScanner::scan($attachment->path());
+
+        // Example: Log the upload
+        Log::info("Attachment uploaded", [
+            'model' => $modelClass,
+            'id' => $modelId,
+            'file' => $attachment->name,
+        ]);
+    }
+}
+```
+
+Register the listener in your `EventServiceProvider`:
+
+```php
+use NiftyCo\Attachments\Events\AttachmentCreated;
+use App\Listeners\ProcessUploadedAttachment;
+
+protected $listen = [
+    AttachmentCreated::class => [
+        ProcessUploadedAttachment::class,
+    ],
+];
+```
+
+### Disabling Events
+
+You can disable events globally in the configuration:
+
+```php
+// config/attachments.php
+
+return [
+    'events' => [
+        'enabled' => false,
+    ],
+];
+```
+
 ## Configuration
 
 The package comes with sensible defaults, but you can customize the behavior by publishing and editing the configuration file:
@@ -362,6 +543,34 @@ return [
     |
     */
     'temporary_url_expiration' => env('ATTACHMENTS_TEMP_URL_EXPIRATION', 60),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Events
+    |--------------------------------------------------------------------------
+    |
+    | Enable or disable events for attachment operations.
+    | When enabled, events will be dispatched for file uploads, deletions, etc.
+    |
+    */
+    'events' => [
+        'enabled' => env('ATTACHMENTS_EVENTS_ENABLED', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | File Validation
+    |--------------------------------------------------------------------------
+    |
+    | Default validation rules for uploaded files.
+    | These rules will be applied when using Attachment::fromFile()
+    |
+    */
+    'validation' => [
+        'file',
+        'max:10240', // 10MB
+        'mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,zip,rar',
+    ],
 ];
 ```
 
