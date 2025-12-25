@@ -31,7 +31,9 @@
   "require-dev": {
     "orchestra/testbench": "^9.5",
     "pestphp/pest": "^3.3",
-    "illuminate/support": "^11.0"
+    "illuminate/support": "^11.0",
+    "phpstan/phpstan": "^2.1",
+    "laravel/pint": "^1.26"
   },
   "autoload-dev": {
     "psr-4": {
@@ -61,7 +63,9 @@
   },
   "extra": {
     "laravel": {
-      "providers": []
+      "providers": [
+        "NiftyCo\\Attachments\\AttachmentsServiceProvider"
+      ]
     }
   },
   "config": {
