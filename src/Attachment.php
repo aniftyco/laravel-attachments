@@ -18,7 +18,7 @@ class Attachment implements Jsonable, JsonSerializable
         UploadedFile $file,
         ?string $disk = null,
         ?string $folder = null,
-        array|string|null $validate = null,
+        mixed $validate = null,
         array $metadata = []
     ): static {
         // Validate file
@@ -112,15 +112,7 @@ class Attachment implements Jsonable, JsonSerializable
     }
 
     /**
-     * Get the file name/path in storage.
-     */
-    public function name(): ?string
-    {
-        return $this->name;
-    }
-
-    /**
-     * Get the file path in storage (alias for name()).
+     * Get the file path in storage.
      */
     public function path(): ?string
     {
@@ -130,39 +122,27 @@ class Attachment implements Jsonable, JsonSerializable
     /**
      * Get the file extension.
      */
-    public function extname(): ?string
-    {
-        return $this->extname;
-    }
-
-    /**
-     * Get the file extension (alias for extname()).
-     */
     public function extension(): ?string
     {
         return $this->extname;
     }
 
     /**
-     * Get the folder/directory path.
+     * Get the MIME type.
      */
-    public function folder(): ?string
+    public function mime(): ?string
     {
-        if ($this->name === null) {
-            return null;
-        }
-
-        $dir = dirname($this->name);
-
-        return $dir !== '.' ? $dir : null;
+        return $this->mimeType;
     }
 
     /**
-     * Get the MIME type.
+     * Alias for mime() for backwards compatibility.
+     *
+     * @deprecated Use mime() instead
      */
     public function mimeType(): ?string
     {
-        return $this->mimeType;
+        return $this->mime();
     }
 
     /**
@@ -192,7 +172,7 @@ class Attachment implements Jsonable, JsonSerializable
      *
      * @throws \RuntimeException
      */
-    public function temporaryUrl(\DateTimeInterface|int|null $expiration = null): string
+    public function tempUrl(\DateTimeInterface|int|null $expiration = null): string
     {
         if (! $this->disk || ! $this->name) {
             throw new \RuntimeException('Cannot generate temporary URL for attachment without disk or name.');
@@ -209,6 +189,16 @@ class Attachment implements Jsonable, JsonSerializable
         } catch (\Exception $e) {
             throw new \RuntimeException("Failed to generate temporary URL: {$e->getMessage()}");
         }
+    }
+
+    /**
+     * Alias for tempUrl() for backwards compatibility.
+     *
+     * @deprecated Use tempUrl() instead
+     */
+    public function temporaryUrl(\DateTimeInterface|int|null $expiration = null): string
+    {
+        return $this->tempUrl($expiration);
     }
 
     /**
@@ -230,6 +220,16 @@ class Attachment implements Jsonable, JsonSerializable
         $bytes /= (1 << (10 * $pow));
 
         return round($bytes, $precision).' '.$units[$pow];
+    }
+
+    /**
+     * Alias for readableSize() for backwards compatibility.
+     *
+     * @deprecated Use readableSize() instead
+     */
+    public function humanReadableSize(int $precision = 2): string
+    {
+        return $this->readableSize($precision);
     }
 
     /**

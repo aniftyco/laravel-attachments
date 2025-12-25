@@ -17,7 +17,7 @@ class Attachments extends Collection
      * Create a collection of attachments from multiple uploaded files.
      *
      * @param  array<UploadedFile>  $files
-     * @param  array<string>|string|null  $validate
+     * @param  mixed  $validate  Laravel validation rules (array, string, or ValidationRule object)
      *
      * @throws \NiftyCo\Attachments\Exceptions\StorageException
      * @throws \NiftyCo\Attachments\Exceptions\ValidationException
@@ -26,7 +26,7 @@ class Attachments extends Collection
         array $files,
         ?string $disk = null,
         ?string $folder = null,
-        array|string|null $validate = null
+        mixed $validate = null
     ): static {
         $collection = new static;
 
@@ -40,7 +40,7 @@ class Attachments extends Collection
     /**
      * Attach a file to the collection.
      *
-     * @param  array<string>|string|null  $validate
+     * @param  mixed  $validate  Laravel validation rules (array, string, or ValidationRule object)
      *
      * @throws \NiftyCo\Attachments\Exceptions\StorageException
      * @throws \NiftyCo\Attachments\Exceptions\ValidationException
@@ -49,7 +49,7 @@ class Attachments extends Collection
         UploadedFile $file,
         ?string $disk = null,
         ?string $folder = null,
-        array|string|null $validate = null
+        mixed $validate = null
     ): static {
         $attachment = Attachment::fromFile($file, $disk, $folder, $validate);
 

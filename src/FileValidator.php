@@ -2,6 +2,7 @@
 
 namespace NiftyCo\Attachments;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Validator;
 use NiftyCo\Attachments\Exceptions\ValidationException;
@@ -11,11 +12,11 @@ class FileValidator
     /**
      * Validate an uploaded file using Laravel's validation rules.
      *
-     * @param  array|string|null  $rules  Laravel validation rules (array or pipe-separated string)
+     * @param  array|string|ValidationRule|null  $rules  Laravel validation rules (array, pipe-separated string, or ValidationRule object)
      *
      * @throws \NiftyCo\Attachments\Exceptions\ValidationException
      */
-    public static function validate(UploadedFile $file, array|string|null $rules = null): void
+    public static function validate(UploadedFile $file, mixed $rules = null): void
     {
         $rules = $rules ?? config('attachments.validation', []);
 
@@ -25,6 +26,7 @@ class FileValidator
         }
 
         // Convert string rules to array if needed
+        // ValidationRule objects and arrays are passed through as-is
         if (is_string($rules)) {
             $rules = explode('|', $rules);
         }

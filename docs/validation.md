@@ -42,6 +42,34 @@ $attachment = Attachment::fromFile(
 );
 ```
 
+### Programmatic Validation Rules (Laravel 11+)
+
+You can use Laravel's fluent `File` validation rule for more expressive validation:
+
+```php
+use Illuminate\Validation\Rules\File;
+
+$user->avatar = Attachment::fromFile(
+    $request->file('avatar'),
+    folder: 'avatars',
+    validate: File::image()
+        ->max(2048)
+        ->dimensions(Rule::dimensions()->minWidth(100)->minHeight(100))
+);
+```
+
+Mix programmatic rules with string rules:
+
+```php
+$attachment = Attachment::fromFile(
+    $file,
+    validate: [
+        'required',
+        File::types(['pdf', 'doc', 'docx'])->max(10 * 1024), // 10MB
+    ]
+);
+```
+
 ## Common Validation Rules
 
 ### File Type Rules
@@ -92,6 +120,64 @@ validate: ['dimensions:ratio=16/9']
 validate: [
     'dimensions:min_width=100,min_height=100,max_width=2000,max_height=2000'
 ]
+```
+
+## Custom Validation Rule
+
+Laravel Attachments provides a fluent `AttachmentRule` for building validation rules programmatically:
+
+```php
+use NiftyCo\Attachments\Rules\AttachmentRule;
+
+$user->avatar = Attachment::fromFile(
+    $request->file('avatar'),
+    folder: 'avatars',
+    validate: AttachmentRule::make()
+        ->images()
+        ->maxSizeMb(5)
+);
+```
+
+### Available Methods
+
+```php
+// File size constraints
+AttachmentRule::make()->maxSize(1048576)      // Max size in bytes
+AttachmentRule::make()->maxSizeKb(1024)       // Max size in kilobytes
+AttachmentRule::make()->maxSizeMb(5)          // Max size in megabytes
+
+// MIME type constraints
+AttachmentRule::make()->mimes(['image/jpeg', 'image/png'])
+
+// Extension constraints
+AttachmentRule::make()->extensions(['jpg', 'png', 'pdf'])
+
+// Preset helpers
+AttachmentRule::make()->images()              // Only images
+AttachmentRule::make()->documents()           // Only documents (PDF, Word, Excel)
+
+// Chaining
+AttachmentRule::make()
+    ->images()
+    ->maxSizeMb(2)
+    ->extensions(['jpg', 'png'])
+```
+
+### Using in Form Requests
+
+```php
+use NiftyCo\Attachments\Rules\AttachmentRule;
+
+class UpdateProfileRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'avatar' => ['required', AttachmentRule::make()->images()->maxSizeMb(2)],
+            'resume' => ['required', AttachmentRule::make()->documents()->maxSizeMb(5)],
+        ];
+    }
+}
 ```
 
 ## Global Validation
@@ -232,35 +318,34 @@ $attachment = Attachment::fromFile(
 
 ### File Rules
 
-| Rule | Description | Example |
-|------|-------------|---------|
-| `file` | Must be a successfully uploaded file | `'file'` |
-| `image` | Must be an image (jpeg, png, bmp, gif, svg, webp) | `'image'` |
-| `mimes:ext1,ext2` | File extension must match | `'mimes:jpg,png,pdf'` |
-| `mimetypes:type1,type2` | MIME type must match | `'mimetypes:image/jpeg,image/png'` |
+| Rule                    | Description                                       | Example                            |
+| ----------------------- | ------------------------------------------------- | ---------------------------------- |
+| `file`                  | Must be a successfully uploaded file              | `'file'`                           |
+| `image`                 | Must be an image (jpeg, png, bmp, gif, svg, webp) | `'image'`                          |
+| `mimes:ext1,ext2`       | File extension must match                         | `'mimes:jpg,png,pdf'`              |
+| `mimetypes:type1,type2` | MIME type must match                              | `'mimetypes:image/jpeg,image/png'` |
 
 ### Size Rules
 
-| Rule | Description | Example |
-|------|-------------|---------|
-| `max:value` | Maximum size in kilobytes | `'max:2048'` (2MB) |
+| Rule        | Description               | Example             |
+| ----------- | ------------------------- | ------------------- |
+| `max:value` | Maximum size in kilobytes | `'max:2048'` (2MB)  |
 | `min:value` | Minimum size in kilobytes | `'min:100'` (100KB) |
 
 ### Image Dimension Rules
 
-| Rule | Description | Example |
-|------|-------------|---------|
-| `dimensions:min_width=X` | Minimum width in pixels | `'dimensions:min_width=100'` |
-| `dimensions:max_width=X` | Maximum width in pixels | `'dimensions:max_width=2000'` |
-| `dimensions:min_height=X` | Minimum height in pixels | `'dimensions:min_height=100'` |
+| Rule                      | Description              | Example                        |
+| ------------------------- | ------------------------ | ------------------------------ |
+| `dimensions:min_width=X`  | Minimum width in pixels  | `'dimensions:min_width=100'`   |
+| `dimensions:max_width=X`  | Maximum width in pixels  | `'dimensions:max_width=2000'`  |
+| `dimensions:min_height=X` | Minimum height in pixels | `'dimensions:min_height=100'`  |
 | `dimensions:max_height=X` | Maximum height in pixels | `'dimensions:max_height=2000'` |
-| `dimensions:width=X` | Exact width in pixels | `'dimensions:width=800'` |
-| `dimensions:height=X` | Exact height in pixels | `'dimensions:height=600'` |
-| `dimensions:ratio=X/Y` | Aspect ratio | `'dimensions:ratio=16/9'` |
+| `dimensions:width=X`      | Exact width in pixels    | `'dimensions:width=800'`       |
+| `dimensions:height=X`     | Exact height in pixels   | `'dimensions:height=600'`      |
+| `dimensions:ratio=X/Y`    | Aspect ratio             | `'dimensions:ratio=16/9'`      |
 
 ## Next Steps
 
 - Learn about [Storage & Disks](storage.md)
 - Configure [Automatic Cleanup](cleanup.md)
 - Explore [Metadata](metadata.md)
-

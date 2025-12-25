@@ -137,3 +137,45 @@ it('skips validation when rules is empty array', function () {
 
     expect(true)->toBeTrue(); // No exception thrown
 });
+
+it('accepts Laravel File validation rule object', function () {
+    $file = UploadedFile::fake()->image('test.jpg', 100, 100);
+
+    $rules = \Illuminate\Validation\Rules\File::image()->max(2048);
+
+    FileValidator::validate($file, $rules);
+
+    expect(true)->toBeTrue(); // No exception thrown
+});
+
+it('validates with Laravel File rule object', function () {
+    $file = UploadedFile::fake()->create('document.pdf', 3000); // 3MB
+
+    $rules = \Illuminate\Validation\Rules\File::image()->max(2048); // 2MB max
+
+    expect(fn () => FileValidator::validate($file, $rules))
+        ->toThrow(ValidationException::class);
+});
+
+it('accepts array with mixed string and ValidationRule objects', function () {
+    $file = UploadedFile::fake()->image('test.jpg', 100, 100);
+
+    $rules = [
+        'required',
+        \Illuminate\Validation\Rules\File::image()->max(2048),
+    ];
+
+    FileValidator::validate($file, $rules);
+
+    expect(true)->toBeTrue(); // No exception thrown
+});
+
+it('accepts custom ValidationRule objects', function () {
+    $file = UploadedFile::fake()->image('test.jpg');
+
+    $rules = \NiftyCo\Attachments\Rules\AttachmentRule::make()->images()->maxSizeMb(5);
+
+    FileValidator::validate($file, $rules);
+
+    expect(true)->toBeTrue(); // No exception thrown
+});

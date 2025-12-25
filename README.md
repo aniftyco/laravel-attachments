@@ -155,6 +155,7 @@ You can validate files during upload by passing validation rules:
 
 ```php
 use NiftyCo\Attachments\Attachment;
+use Illuminate\Validation\Rules\File;
 
 // Single attachment with validation
 $user->avatar = Attachment::fromFile(
@@ -169,12 +170,20 @@ $post->images = Attachments::fromFiles(
     folder: 'posts',
     validate: ['image', 'max:5120']
 );
+
+// Programmatic validation (Laravel 11+)
+$user->avatar = Attachment::fromFile(
+    $request->file('avatar'),
+    folder: 'avatars',
+    validate: File::image()->max(2048)
+);
 ```
 
 Validation rules can be:
 
 - **Array format**: `['image', 'max:2048', 'mimes:jpg,png']`
 - **String format**: `'image|max:2048|mimes:jpg,png'`
+- **Programmatic**: `File::image()->max(2048)` or `AttachmentRule::make()->images()->maxSizeMb(2)`
 
 Common validation rules:
 

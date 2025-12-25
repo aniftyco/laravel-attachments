@@ -161,3 +161,25 @@ it('accepts validation rules as string', function () {
 
     expect($attachment)->toBeInstanceOf(Attachment::class);
 });
+
+it('accepts Laravel File validation rule object', function () {
+    $file = UploadedFile::fake()->image('test.jpg');
+
+    $attachment = Attachment::fromFile(
+        $file,
+        validate: \Illuminate\Validation\Rules\File::image()->max(2048)
+    );
+
+    expect($attachment)->toBeInstanceOf(Attachment::class);
+});
+
+it('accepts custom ValidationRule objects', function () {
+    $file = UploadedFile::fake()->image('test.jpg');
+
+    $attachment = Attachment::fromFile(
+        $file,
+        validate: \NiftyCo\Attachments\Rules\AttachmentRule::make()->images()->maxSizeMb(5)
+    );
+
+    expect($attachment)->toBeInstanceOf(Attachment::class);
+});
