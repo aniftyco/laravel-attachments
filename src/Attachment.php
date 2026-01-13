@@ -25,7 +25,10 @@ class Attachment implements Jsonable, JsonSerializable
         $folder = $folder ?? config('attachments.folder', 'attachments');
 
         try {
-            $path = $file->store($folder, $disk);
+            $visibility = config("filesystems.disks.{$disk}.visibility");
+            $path = $visibility === 'public'
+                ? $file->storePublicly($folder, $disk)
+                : $file->store($folder, $disk);
 
             if ($path === false) {
                 throw StorageException::uploadFailed('File storage returned false');
@@ -352,7 +355,8 @@ class Attachment implements Jsonable, JsonSerializable
 
             // Copy to new location
             $contents = Storage::disk($this->disk)->get($this->name);
-            Storage::disk($targetDisk)->put($newPath, $contents);
+            $visibility = config("filesystems.disks.{$targetDisk}.visibility");
+            Storage::disk($targetDisk)->put($newPath, $contents, $visibility ? ['visibility' => $visibility] : []);
 
             // Delete old file
             Storage::disk($this->disk)->delete($this->name);
@@ -439,7 +443,8 @@ class Attachment implements Jsonable, JsonSerializable
 
             // Copy file
             $contents = Storage::disk($this->disk)->get($this->name);
-            Storage::disk($targetDisk)->put($newPath, $contents);
+            $visibility = config("filesystems.disks.{$targetDisk}.visibility");
+            Storage::disk($targetDisk)->put($newPath, $contents, $visibility ? ['visibility' => $visibility] : []);
 
             // Return new instance
             return new static(
