@@ -8,6 +8,8 @@ use NiftyCo\Attachments\Attachments;
 
 trait HasAttachments
 {
+    use HasAttachmentCleanup;
+
     /**
      * Attach a file to the specified attribute.
      */

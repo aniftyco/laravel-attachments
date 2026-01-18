@@ -154,3 +154,51 @@ it('does not delete old attachment when delete_on_replace is disabled', function
     // New file should also exist
     expect(Storage::disk('public')->exists($attachment2->path()))->toBeTrue();
 });
+
+it('does not delete new attachment when replacing via request pattern', function () {
+    config(['attachments.delete_on_replace' => true]);
+
+    $model = new class extends Model
+    {
+        protected $table = 'test_models';
+
+        protected $guarded = [];
+
+        protected function casts(): array
+        {
+            return [
+                'avatar' => AsAttachment::class,
+            ];
+        }
+    };
+
+    // Simulate: user already exists with an avatar
+    $existingFile = UploadedFile::fake()->image('existing-avatar.jpg');
+    $existingAttachment = Attachment::fromFile($existingFile, 'public');
+    $model->avatar = $existingAttachment;
+    $model->save();
+
+    $existingPath = $existingAttachment->path();
+    expect(Storage::disk('public')->exists($existingPath))->toBeTrue();
+
+    // Now simulate the request pattern (no refresh - same model instance)
+    $newFile = UploadedFile::fake()->image('new-avatar.jpg');
+    $newAttachment = Attachment::fromFile($newFile, 'public');
+    $newPath = $newAttachment->path();
+
+    // File should exist immediately after fromFile
+    expect(Storage::disk('public')->exists($newPath))->toBeTrue();
+
+    // Now set it on the model (this triggers the cast's set method)
+    $model->avatar = $newAttachment;
+
+    // New file should STILL exist after assignment
+    expect(Storage::disk('public')->exists($newPath))->toBeTrue();
+
+    // Save the model
+    $model->save();
+
+    // After save: old should be deleted, new should exist
+    expect(Storage::disk('public')->exists($existingPath))->toBeFalse();
+    expect(Storage::disk('public')->exists($newPath))->toBeTrue();
+});

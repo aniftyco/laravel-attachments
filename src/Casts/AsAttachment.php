@@ -43,26 +43,28 @@ class AsAttachment implements CastsAttributes
 
     public function set(Model $model, string $key, mixed $attachment, array $attributes): ?string
     {
-        // Delete old attachment if replacement is enabled and a new attachment is being set
+        // Normalize the attachment first
+        $newAttachment = null;
+        if ($attachment instanceof Attachment) {
+            $newAttachment = $attachment;
+        }
+
+        // Delete old attachment if replacement is enabled
         if (config('attachments.delete_on_replace', true)) {
-            $this->deleteOldAttachment($model, $key);
+            $this->deleteOldAttachment($model, $key, $newAttachment);
         }
 
-        if ($attachment === null) {
+        if ($newAttachment === null) {
             return null;
         }
 
-        if (! $attachment instanceof Attachment) {
-            return null;
-        }
-
-        return $attachment->toJson();
+        return $newAttachment->toJson();
     }
 
     /**
      * Delete the old attachment when it's being replaced.
      */
-    protected function deleteOldAttachment(Model $model, string $key): void
+    protected function deleteOldAttachment(Model $model, string $key, ?Attachment $newAttachment): void
     {
         // Only delete if the model exists (not a new model)
         if (! $model->exists) {
@@ -81,11 +83,18 @@ class AsAttachment implements CastsAttributes
             $oldAttachment = $this->get($model, $key, $original, [$key => $original]);
 
             if ($oldAttachment instanceof Attachment) {
+                // Safety check: don't delete if old and new point to the same file
+                if ($newAttachment !== null
+                    && $oldAttachment->path() === $newAttachment->path()
+                    && $oldAttachment->disk() === $newAttachment->disk()) {
+                    return;
+                }
+
                 $oldAttachment->delete();
             }
         } catch (\Exception $e) {
             // Log error but don't throw - we don't want to prevent the update
-            if (function_exists('logger')) {
+            if (\function_exists('logger')) {
                 logger()->warning('Failed to delete old attachment during replacement', [
                     'model' => \get_class($model),
                     'attribute' => $key,
