@@ -9,6 +9,7 @@ use NiftyCo\Attachments\Attachment;
 use NiftyCo\Attachments\Attachments;
 use NiftyCo\Attachments\Casts\AsAttachment;
 use NiftyCo\Attachments\Casts\AsAttachments;
+use NiftyCo\Attachments\Concerns\HasAttachmentCleanup;
 
 beforeEach(function () {
     Storage::fake('public');
@@ -159,6 +160,8 @@ function createDocumentModel(): Model
 {
     $model = new class extends Model
     {
+        use HasAttachmentCleanup;
+
         protected $table = 'documents';
         protected $guarded = [];
 
