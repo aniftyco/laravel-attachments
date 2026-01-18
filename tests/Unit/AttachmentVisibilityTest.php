@@ -117,3 +117,44 @@ it('duplicate preserves file content across disks with different visibility', fu
     expect($duplicate->contents())->toBe('Hello World');
     expect(Storage::disk('public-disk')->getVisibility($duplicate->path()))->toBe('public');
 });
+
+it('defaults to private visibility when disk has no visibility configured', function () {
+    Storage::fake('no-visibility-disk');
+    // Note: NOT setting any visibility in config
+
+    $file = UploadedFile::fake()->image('test.jpg');
+
+    $attachment = Attachment::fromFile($file, 'no-visibility-disk', 'uploads');
+
+    // Should default to private (store, not storePublicly)
+    expect($attachment->exists())->toBeTrue();
+    expect(Storage::disk('no-visibility-disk')->getVisibility($attachment->path()))->toBe('private');
+});
+
+it('move defaults to private visibility when target disk has no visibility configured', function () {
+    Config::set('filesystems.disks.public-disk.visibility', 'public');
+    Storage::fake('public-disk');
+    Storage::fake('no-visibility-disk');
+
+    $file = UploadedFile::fake()->image('test.jpg');
+    $attachment = Attachment::fromFile($file, 'public-disk', 'uploads');
+
+    $moved = $attachment->move('no-visibility-disk', 'moved');
+
+    expect($moved->exists())->toBeTrue();
+    expect(Storage::disk('no-visibility-disk')->getVisibility($moved->path()))->toBe('private');
+});
+
+it('duplicate defaults to private visibility when target disk has no visibility configured', function () {
+    Config::set('filesystems.disks.public-disk.visibility', 'public');
+    Storage::fake('public-disk');
+    Storage::fake('no-visibility-disk');
+
+    $file = UploadedFile::fake()->image('test.jpg');
+    $attachment = Attachment::fromFile($file, 'public-disk', 'uploads');
+
+    $duplicate = $attachment->duplicate('no-visibility-disk', 'duplicates');
+
+    expect($duplicate->exists())->toBeTrue();
+    expect(Storage::disk('no-visibility-disk')->getVisibility($duplicate->path()))->toBe('private');
+});

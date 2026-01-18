@@ -24,7 +24,7 @@ class AttachmentField extends FileUpload
     {
         $this->attachmentDisk = $disk;
 
-        return $this->disk($disk ?? config('attachments.disk', 'public'));
+        return $this->disk($disk ?? config('attachments.disk'));
     }
 
     /**
@@ -34,7 +34,7 @@ class AttachmentField extends FileUpload
     {
         $this->attachmentFolder = $folder;
 
-        return $this->directory($folder ?? config('attachments.folder', 'attachments'));
+        return $this->directory($folder ?? config('attachments.folder'));
     }
 
     /**
@@ -43,8 +43,8 @@ class AttachmentField extends FileUpload
     public static function make(?string $name = null): static
     {
         return parent::make($name)
-            ->disk(config('attachments.disk', 'public'))
-            ->directory(config('attachments.folder', 'attachments'))
+            ->disk(config('attachments.disk'))
+            ->directory(config('attachments.folder'))
             ->dehydrateStateUsing(function ($state) {
                 if (! $state) {
                     return null;
@@ -58,7 +58,7 @@ class AttachmentField extends FileUpload
                     // Handle file path from upload
                     return Attachment::fromPath(
                         $state,
-                        config('attachments.disk', 'public')
+                        config('attachments.disk')
                     );
                 }
 
@@ -93,7 +93,7 @@ class AttachmentField extends FileUpload
                     if (\is_string($item)) {
                         return Attachment::fromPath(
                             $item,
-                            config('attachments.disk', 'public')
+                            config('attachments.disk')
                         );
                     }
 
