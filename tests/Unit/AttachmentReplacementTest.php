@@ -177,27 +177,27 @@ it('does not delete new attachment when replacing via request pattern', function
     $existingAttachment = Attachment::fromFile($existingFile, 'public');
     $model->avatar = $existingAttachment;
     $model->save();
-    
+
     $existingPath = $existingAttachment->path();
     expect(Storage::disk('public')->exists($existingPath))->toBeTrue();
-    
+
     // Now simulate the request pattern (no refresh - same model instance)
     $newFile = UploadedFile::fake()->image('new-avatar.jpg');
     $newAttachment = Attachment::fromFile($newFile, 'public');
     $newPath = $newAttachment->path();
-    
+
     // File should exist immediately after fromFile
     expect(Storage::disk('public')->exists($newPath))->toBeTrue();
-    
+
     // Now set it on the model (this triggers the cast's set method)
     $model->avatar = $newAttachment;
-    
+
     // New file should STILL exist after assignment
     expect(Storage::disk('public')->exists($newPath))->toBeTrue();
-    
+
     // Save the model
     $model->save();
-    
+
     // After save: old should be deleted, new should exist
     expect(Storage::disk('public')->exists($existingPath))->toBeFalse();
     expect(Storage::disk('public')->exists($newPath))->toBeTrue();
