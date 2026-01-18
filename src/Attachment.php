@@ -21,14 +21,15 @@ class Attachment implements Jsonable, JsonSerializable
         array $metadata = []
     ): static {
         // Use config defaults
-        $disk = $disk ?? config('attachments.disk', config('filesystems.default'));
-        $folder = $folder ?? config('attachments.folder', 'attachments');
+        $disk = $disk ?? config('attachments.disk');
+        $folder = $folder ?? config('attachments.folder');
 
         try {
-            $visibility = config("filesystems.disks.{$disk}.visibility");
-            $path = $visibility === 'public'
-                ? $file->storePublicly($folder, $disk)
-                : $file->store($folder, $disk);
+            $visibility = config("filesystems.disks.{$disk}.visibility", 'private');
+            $path = $file->store($folder, [
+                'disk' => $disk,
+                'visibility' => $visibility,
+            ]);
 
             if ($path === false) {
                 throw StorageException::uploadFailed('File storage returned false');
@@ -64,7 +65,7 @@ class Attachment implements Jsonable, JsonSerializable
         ?string $disk = null,
         array $metadata = []
     ): static {
-        $disk = $disk ?? config('attachments.disk', config('filesystems.default'));
+        $disk = $disk ?? config('attachments.disk');
 
         try {
             if (! Storage::disk($disk)->exists($path)) {
@@ -355,8 +356,8 @@ class Attachment implements Jsonable, JsonSerializable
 
             // Copy to new location
             $contents = Storage::disk($this->disk)->get($this->name);
-            $visibility = config("filesystems.disks.{$targetDisk}.visibility");
-            Storage::disk($targetDisk)->put($newPath, $contents, $visibility ? ['visibility' => $visibility] : []);
+            $visibility = config("filesystems.disks.{$targetDisk}.visibility", 'private');
+            Storage::disk($targetDisk)->put($newPath, $contents, ['visibility' => $visibility]);
 
             // Delete old file
             Storage::disk($this->disk)->delete($this->name);
@@ -443,8 +444,8 @@ class Attachment implements Jsonable, JsonSerializable
 
             // Copy file
             $contents = Storage::disk($this->disk)->get($this->name);
-            $visibility = config("filesystems.disks.{$targetDisk}.visibility");
-            Storage::disk($targetDisk)->put($newPath, $contents, $visibility ? ['visibility' => $visibility] : []);
+            $visibility = config("filesystems.disks.{$targetDisk}.visibility", 'private');
+            Storage::disk($targetDisk)->put($newPath, $contents, ['visibility' => $visibility]);
 
             // Return new instance
             return new static(
