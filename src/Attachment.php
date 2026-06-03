@@ -7,6 +7,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use JsonSerializable;
 use NiftyCo\Attachments\Exceptions\StorageException;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class Attachment implements Jsonable, JsonSerializable
 {
@@ -314,7 +315,7 @@ class Attachment implements Jsonable, JsonSerializable
      *
      * @throws \RuntimeException
      */
-    public function download(?string $name = null): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function download(?string $name = null): StreamedResponse
     {
         if (! $this->disk || ! $this->name) {
             throw new \RuntimeException('Cannot download attachment without disk or name.');

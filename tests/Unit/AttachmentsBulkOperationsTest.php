@@ -4,6 +4,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use NiftyCo\Attachments\Attachment;
 use NiftyCo\Attachments\Attachments;
+use NiftyCo\Attachments\Exceptions\StorageException;
 
 beforeEach(function () {
     Storage::fake('public');
@@ -123,7 +124,7 @@ it('throws exception when creating archive from empty collection', function () {
     $attachments = new Attachments([]);
 
     $attachments->archive('empty.zip');
-})->throws(\NiftyCo\Attachments\Exceptions\StorageException::class, 'Cannot create archive from empty collection');
+})->throws(StorageException::class, 'Cannot create archive from empty collection');
 
 it('can calculate total size of attachments', function () {
     $file1 = UploadedFile::fake()->create('file1.txt', 100); // 100KB

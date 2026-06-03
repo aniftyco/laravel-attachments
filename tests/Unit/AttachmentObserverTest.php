@@ -165,5 +165,5 @@ it('handles null attachments gracefully', function () {
     $model->save();
 
     // Should not throw exception
-    expect(fn () => $model->delete())->not->toThrow(\Exception::class);
+    expect(fn () => $model->delete())->not->toThrow(Exception::class);
 });

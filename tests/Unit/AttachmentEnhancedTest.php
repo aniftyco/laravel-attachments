@@ -3,6 +3,7 @@
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use NiftyCo\Attachments\Attachment;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 beforeEach(function () {
     Storage::fake('public');
@@ -101,7 +102,7 @@ it('can download file', function () {
 
     $response = $attachment->download();
 
-    expect($response)->toBeInstanceOf(\Symfony\Component\HttpFoundation\StreamedResponse::class);
+    expect($response)->toBeInstanceOf(StreamedResponse::class);
 });
 
 it('throws exception when downloading without disk', function () {

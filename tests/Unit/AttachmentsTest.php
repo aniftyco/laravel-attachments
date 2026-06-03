@@ -3,6 +3,7 @@
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection as IlluminateCollection;
 use Illuminate\Support\Facades\Storage;
+use NiftyCo\Attachments\Attachment;
 use NiftyCo\Attachments\Attachments;
 
 it('extends Illuminate\Support\Collection', function () {
@@ -17,7 +18,7 @@ it('allows you to attach a file', function () {
     $attachments->attach(UploadedFile::fake()->image('image.jpg'));
 
     expect($attachments->count())->toBe(1);
-    expect($attachments->first())->toBeInstanceOf(\NiftyCo\Attachments\Attachment::class);
+    expect($attachments->first())->toBeInstanceOf(Attachment::class);
 });
 
 it('can create collection from multiple files', function () {
@@ -32,5 +33,5 @@ it('can create collection from multiple files', function () {
     $attachments = Attachments::fromFiles($files);
 
     expect($attachments->count())->toBe(3);
-    expect($attachments->every(fn ($item) => $item instanceof \NiftyCo\Attachments\Attachment))->toBeTrue();
+    expect($attachments->every(fn ($item) => $item instanceof Attachment))->toBeTrue();
 });

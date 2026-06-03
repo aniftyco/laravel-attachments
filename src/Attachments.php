@@ -4,12 +4,13 @@ namespace NiftyCo\Attachments;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
+use NiftyCo\Attachments\Exceptions\StorageException;
 
 /**
  * @template TKey of array-key
  * @template TAttachment of \NiftyCo\Attachments\Attachment
  *
- * @extends \Illuminate\Support\Collection<TKey, TAttachment>
+ * @extends Collection<TKey, TAttachment>
  */
 class Attachments extends Collection
 {
@@ -18,7 +19,7 @@ class Attachments extends Collection
      *
      * @param  array<UploadedFile>  $files
      *
-     * @throws \NiftyCo\Attachments\Exceptions\StorageException
+     * @throws StorageException
      */
     public static function fromFiles(
         array $files,
@@ -37,7 +38,7 @@ class Attachments extends Collection
     /**
      * Attach a file to the collection.
      *
-     * @throws \NiftyCo\Attachments\Exceptions\StorageException
+     * @throws StorageException
      */
     public function attach(
         UploadedFile $file,
@@ -74,7 +75,7 @@ class Attachments extends Collection
      * @param  string|null  $folder  Target folder (optional)
      * @return static New collection with moved attachments
      *
-     * @throws \NiftyCo\Attachments\Exceptions\StorageException
+     * @throws StorageException
      */
     public function move(string $disk, ?string $folder = null): static
     {
@@ -94,7 +95,7 @@ class Attachments extends Collection
      * @param  string|null  $folder  Target folder (optional)
      * @return static New collection with copied attachments
      *
-     * @throws \NiftyCo\Attachments\Exceptions\StorageException
+     * @throws StorageException
      */
     public function copy(string $disk, ?string $folder = null): static
     {
@@ -115,12 +116,12 @@ class Attachments extends Collection
      * @param  string|null  $folder  Folder to store the archive
      * @return Attachment The created archive attachment
      *
-     * @throws \NiftyCo\Attachments\Exceptions\StorageException
+     * @throws StorageException
      */
     public function archive(string $archiveName, ?string $disk = null, ?string $folder = null): Attachment
     {
         if ($this->isEmpty()) {
-            throw new \NiftyCo\Attachments\Exceptions\StorageException('Cannot create archive from empty collection');
+            throw new StorageException('Cannot create archive from empty collection');
         }
 
         // Use first attachment's disk if not specified
@@ -132,7 +133,7 @@ class Attachments extends Collection
         $zip = new \ZipArchive;
 
         if ($zip->open($tempZip, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-            throw new \NiftyCo\Attachments\Exceptions\StorageException('Failed to create zip archive');
+            throw new StorageException('Failed to create zip archive');
         }
 
         // Add each attachment to the zip
