@@ -22,12 +22,14 @@ class UserAvatarTest extends TestCase
 
 ## Creating Fake Attachments
 
+The helper signature is `createFakeAttachment(string $name = 'test.jpg', string $disk = 'public', string $folder = 'test', int $sizeKb = 100)`. The extension in `$name` determines the file's type.
+
 ### Fake Image
 
 ```php
 public function test_user_can_upload_avatar()
 {
-    $attachment = $this->createFakeAttachment('image');
+    $attachment = $this->createFakeAttachment('avatar.jpg');
     
     $this->assertInstanceOf(Attachment::class, $attachment);
     $this->assertTrue($attachment->isImage());
@@ -39,7 +41,7 @@ public function test_user_can_upload_avatar()
 ```php
 public function test_user_can_upload_document()
 {
-    $attachment = $this->createFakeAttachment('pdf');
+    $attachment = $this->createFakeAttachment('document.pdf');
     
     $this->assertTrue($attachment->isPdf());
 }
@@ -51,12 +53,13 @@ public function test_user_can_upload_document()
 public function test_user_can_upload_custom_file()
 {
     $attachment = $this->createFakeAttachment(
-        type: 'image',
         name: 'test-avatar.jpg',
-        sizeInKb: 500
+        disk: 'public',
+        folder: 'avatars',
+        sizeKb: 500
     );
     
-    $this->assertEquals('test-avatar.jpg', $attachment->metadata('original_name'));
+    $this->assertAttachmentSize($attachment, 500 * 1024);
 }
 ```
 
@@ -68,7 +71,7 @@ public function test_user_can_upload_custom_file()
 public function test_attachment_exists_in_storage()
 {
     $user = User::factory()->create();
-    $user->avatar = $this->createFakeAttachment('image');
+    $user->avatar = $this->createFakeAttachment('avatar.jpg');
     $user->save();
     
     $this->assertAttachmentExists($user->avatar);
@@ -81,7 +84,7 @@ public function test_attachment_exists_in_storage()
 public function test_attachment_deleted()
 {
     $user = User::factory()->create();
-    $user->avatar = $this->createFakeAttachment('image');
+    $user->avatar = $this->createFakeAttachment('avatar.jpg');
     $user->save();
     
     $attachment = $user->avatar;
@@ -91,14 +94,14 @@ public function test_attachment_deleted()
 }
 ```
 
-### Assert Attachment Disk
+### Assert Attachment MIME Type
 
 ```php
-public function test_attachment_stored_on_correct_disk()
+public function test_attachment_has_correct_mime_type()
 {
-    $attachment = $this->createFakeAttachment('image', disk: 's3');
+    $attachment = $this->createFakeAttachment('avatar.jpg');
     
-    $this->assertAttachmentDisk($attachment, 's3');
+    $this->assertAttachmentMimeType($attachment, 'image/jpeg');
 }
 ```
 
@@ -107,7 +110,7 @@ public function test_attachment_stored_on_correct_disk()
 ```php
 public function test_attachment_has_correct_size()
 {
-    $attachment = $this->createFakeAttachment('image', sizeInKb: 500);
+    $attachment = $this->createFakeAttachment(name: 'avatar.jpg', sizeKb: 500);
     
     $this->assertAttachmentSize($attachment, 500 * 1024); // bytes
 }
@@ -212,7 +215,7 @@ public function test_avatar_deleted_when_user_deleted()
     Storage::fake('public');
     
     $user = User::factory()->create();
-    $user->avatar = $this->createFakeAttachment('image');
+    $user->avatar = $this->createFakeAttachment('avatar.jpg');
     $user->save();
     
     $attachment = $user->avatar;
@@ -233,11 +236,11 @@ public function test_old_avatar_deleted_when_replaced()
     Storage::fake('public');
     
     $user = User::factory()->create();
-    $oldAvatar = $this->createFakeAttachment('image');
+    $oldAvatar = $this->createFakeAttachment('avatar.jpg');
     $user->avatar = $oldAvatar;
     $user->save();
     
-    $newAvatar = $this->createFakeAttachment('image');
+    $newAvatar = $this->createFakeAttachment('avatar.jpg');
     $user->avatar = $newAvatar;
     $user->save();
     
@@ -257,7 +260,7 @@ public function test_attachment_created_event_dispatched()
     Event::fake([AttachmentCreated::class]);
     
     $user = User::factory()->create();
-    $user->avatar = $this->createFakeAttachment('image');
+    $user->avatar = $this->createFakeAttachment('avatar.jpg');
     $user->save();
     
     Event::assertDispatched(AttachmentCreated::class);
@@ -379,7 +382,7 @@ class UserAvatarTest extends TestCase
         Storage::fake('public');
         
         $user = User::factory()->create();
-        $user->avatar = $this->createFakeAttachment('image');
+        $user->avatar = $this->createFakeAttachment('avatar.jpg');
         $user->save();
         
         $attachment = $user->avatar;

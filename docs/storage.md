@@ -217,20 +217,20 @@ $user->avatar = $newAttachment;
 $user->save();
 ```
 
-## Copying Attachments
+## Duplicating Attachments
 
-### Copy to Different Disk
+### Duplicate to Different Disk
 
 ```php
 // Create a backup on S3
-$backup = $user->avatar->copy('s3', 'backups/avatars');
+$backup = $user->avatar->duplicate('s3', 'backups/avatars');
 ```
 
-### Copy to Different Folder
+### Duplicate to Different Folder
 
 ```php
-// Create a copy in different folder
-$copy = $user->avatar->copy(folder: 'avatar-copies');
+// Create a copy in a different folder
+$copy = $user->avatar->duplicate(folder: 'avatar-copies');
 ```
 
 ## Storage Best Practices
@@ -276,7 +276,7 @@ For S3 or compatible services, configure a CDN:
 ```php
 // Automatically backup important files
 $user->document = Attachment::fromFile($file, disk: 'local', folder: 'documents');
-$user->document->copy('s3', 'backups/documents');
+$user->document->duplicate('s3', 'backups/documents');
 ```
 
 ## Checking Storage
@@ -307,4 +307,4 @@ $disk = $user->avatar->disk();   // "public"
 
 - Learn about [URL Generation](urls.md)
 - Configure [Automatic Cleanup](cleanup.md)
-- Explore [Metadata](metadata.md)
+- Use [API Resources](api-resources.md)

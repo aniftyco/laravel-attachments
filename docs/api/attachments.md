@@ -20,8 +20,7 @@ Create a collection from multiple uploaded files.
 public static function fromFiles(
     array $files,
     ?string $disk = null,
-    ?string $folder = null,
-    array|string|null $validate = null
+    ?string $folder = null
 ): static
 ```
 
@@ -30,13 +29,11 @@ public static function fromFiles(
 - `$files` - Array of `UploadedFile` instances
 - `$disk` - Storage disk (defaults to config value)
 - `$folder` - Folder path (defaults to config value)
-- `$validate` - Validation rules applied to each file
 
 **Returns:** `Attachments` collection instance
 
 **Throws:**
 
-- `ValidationException` - If any file fails validation
 - `StorageException` - If file storage fails
 
 **Example:**
@@ -45,9 +42,78 @@ public static function fromFiles(
 $attachments = Attachments::fromFiles(
     $request->file('images'),
     disk: 'public',
-    folder: 'posts',
-    validate: ['image', 'max:5120']
+    folder: 'posts'
 );
+```
+
+### `fromContents()`
+
+Create a collection from multiple raw contents. Each item needs a `content` key and may include optional `filename` and `mimeType` keys. As with `Attachment::fromContent()`, the filename only feeds the naming strategy and extension and is never persisted.
+
+```php
+public static function fromContents(
+    array $items,
+    ?string $disk = null,
+    ?string $folder = null
+): static
+```
+
+**Parameters:**
+
+- `$items` - Array of `['content' => string, 'filename' => ?string, 'mimeType' => ?string]` items
+- `$disk` - Storage disk (defaults to config value)
+- `$folder` - Folder path (defaults to config value)
+
+**Returns:** `Attachments` collection instance
+
+**Throws:**
+
+- `StorageException` - If an item is missing its `content` key, or if file storage fails
+
+**Example:**
+
+```php
+$attachments = Attachments::fromContents([
+    ['content' => $firstBytes, 'filename' => 'chart.png'],
+    ['content' => $secondBytes, 'mimeType' => 'image/jpeg'],
+], folder: 'posts');
+```
+
+### `fromUrls()`
+
+Create a collection by streaming multiple remote URLs into the disk. See
+`Attachment::fromUrl()`.
+
+```php
+public static function fromUrls(
+    array $urls,
+    ?string $disk = null,
+    ?string $folder = null
+): static
+```
+
+**Parameters:**
+
+- `$urls` - Array of URL strings
+- `$disk` - Storage disk (defaults to config value)
+- `$folder` - Folder path (defaults to config value)
+
+**Returns:** `Attachments` collection instance
+
+**Throws:**
+
+- `StorageException` - If any fetch or file storage fails
+
+> **Security:** These URLs are fetched as-is. Validating or allow-listing the
+> hosts to prevent SSRF is the caller's responsibility.
+
+**Example:**
+
+```php
+$attachments = Attachments::fromUrls([
+    'https://example.com/a.png',
+    'https://example.com/b.png',
+], folder: 'posts');
 ```
 
 ## Adding Attachments
@@ -60,8 +126,7 @@ Add a file to the collection.
 public function attach(
     UploadedFile $file,
     ?string $disk = null,
-    ?string $folder = null,
-    array|string|null $validate = null
+    ?string $folder = null
 ): static
 ```
 
@@ -70,7 +135,6 @@ public function attach(
 - `$file` - The uploaded file instance
 - `$disk` - Storage disk
 - `$folder` - Folder path
-- `$validate` - Validation rules
 
 **Returns:** `$this` for chaining
 
@@ -121,48 +185,26 @@ public function move(?string $disk = null, ?string $folder = null): static
 $movedImages = $post->images->move('s3', 'archived-posts');
 ```
 
-### `copy()`
+### `duplicate()`
 
-Copy all attachments to a different location.
+Duplicate all attachments to a different location. Each copy's name is generated
+by the configured naming strategy.
 
 ```php
-public function copy(?string $disk = null, ?string $folder = null): static
+public function duplicate(?string $disk = null, ?string $folder = null): static
 ```
 
 **Parameters:**
 
-- `$disk` - Target disk
+- `$disk` - Target disk (null to keep each attachment's disk)
 - `$folder` - Target folder
 
-**Returns:** New `Attachments` collection with copied files
+**Returns:** New `Attachments` collection with duplicated files
 
 **Example:**
 
 ```php
-$backups = $post->images->copy('backup', 'backups/posts');
-```
-
-### `archive()`
-
-Create a ZIP archive of all attachments.
-
-```php
-public function archive(string $archiveName, ?string $disk = null, ?string $folder = null): Attachment
-```
-
-**Parameters:**
-
-- `$archiveName` - Name of the ZIP file
-- `$disk` - Disk to store the archive (defaults to first attachment's disk)
-- `$folder` - Folder to store the archive (defaults to 'archives')
-
-**Returns:** `Attachment` instance of the created archive
-
-**Example:**
-
-```php
-$archive = $post->images->archive('post-images.zip');
-echo $archive->url(); // URL to the archive file
+$backups = $post->images->duplicate('backup', 'backups/posts');
 ```
 
 ## Size Methods
@@ -185,18 +227,24 @@ $bytes = $post->images->totalSize();
 
 ### `totalReadableSize()`
 
-Get human-readable total size.
+Get human-readable total size. With no argument the output is trimmed; pass an
+integer to render that many fixed decimal places.
 
 ```php
-public function totalReadableSize(): string
+public function totalReadableSize(?int $precision = null): string
 ```
+
+**Parameters:**
+
+- `$precision` - Fixed decimal places (null trims the output)
 
 **Returns:** Formatted size string
 
 **Example:**
 
 ```php
-echo $post->images->totalReadableSize(); // "15.3 MB"
+echo $post->images->totalReadableSize();  // "15.3 MB"
+echo $post->images->totalReadableSize(2); // "15.30 MB"
 ```
 
 ## Filtering Methods
@@ -211,7 +259,7 @@ public function ofType(string $type): static
 
 **Parameters:**
 
-- `$type` - Type to filter by: `'image'`, `'pdf'`, `'video'`, `'audio'`
+- `$type` - Type to filter by: `'image'`, `'pdf'`, `'video'`, `'audio'`, `'document'`
 
 **Returns:** Filtered collection
 
@@ -250,31 +298,31 @@ $large = $post->images->filter(fn($img) => $img->size() > 1048576);
 // Reject
 $small = $post->images->reject(fn($img) => $img->size() > 1048576);
 
-// Where
-$jpegs = $post->images->where('mime', 'image/jpeg');
+// Filter by MIME type
+$jpegs = $post->images->filter(fn($img) => $img->mime() === 'image/jpeg');
 ```
 
 ### Mapping
 
 ```php
-// Map
+// Map to URLs
 $urls = $post->images->map(fn($img) => $img->url());
 
-// Pluck
-$names = $post->images->pluck('name');
+// Map to paths
+$paths = $post->images->map(fn($img) => $img->path());
 ```
 
 ### Sorting
 
 ```php
 // Sort by size
-$sorted = $post->images->sortBy('size');
+$sorted = $post->images->sortBy(fn($img) => $img->size());
 
-// Sort by name
-$sorted = $post->images->sortBy('name');
+// Sort by path
+$sorted = $post->images->sortBy(fn($img) => $img->path());
 
-// Sort descending
-$sorted = $post->images->sortByDesc('size');
+// Sort descending by size
+$sorted = $post->images->sortByDesc(fn($img) => $img->size());
 ```
 
 ### Counting
@@ -307,7 +355,7 @@ $last = $post->images->last();
 $second = $post->images->get(1);
 
 // Find
-$specific = $post->images->first(fn($img) => $img->name() === 'photo.jpg');
+$specific = $post->images->first(fn($img) => $img->path() === 'posts/photo.jpg');
 ```
 
 ### Slicing
@@ -336,7 +384,7 @@ $post->images->chunk(10)->each(function ($chunk) {
 
 ```php
 // Contains
-$hasPhoto = $post->images->contains(fn($img) => $img->name() === 'photo.jpg');
+$hasPhoto = $post->images->contains(fn($img) => $img->path() === 'posts/photo.jpg');
 
 // Every
 $allImages = $post->images->every(fn($img) => $img->isImage());
@@ -406,9 +454,9 @@ $pdfs = $grouped->get('pdfs');
 $stats = [
     'total' => $post->images->count(),
     'total_size' => $post->images->totalSize(),
-    'average_size' => $post->images->avg('size'),
-    'largest' => $post->images->max('size'),
-    'smallest' => $post->images->min('size'),
+    'average_size' => $post->images->avg(fn($img) => $img->size()),
+    'largest' => $post->images->max(fn($img) => $img->size()),
+    'smallest' => $post->images->min(fn($img) => $img->size()),
 ];
 ```
 

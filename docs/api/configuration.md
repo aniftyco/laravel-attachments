@@ -18,25 +18,8 @@ return [
     'folder' => env('ATTACHMENTS_FOLDER', 'attachments'),
     'auto_cleanup' => env('ATTACHMENTS_AUTO_CLEANUP', true),
     'delete_on_replace' => env('ATTACHMENTS_DELETE_ON_REPLACE', true),
-    'validation' => [
-        'file',
-        'max:10240',
-        'mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,zip,rar',
-    ],
-    'naming_strategy' => env('ATTACHMENTS_NAMING_STRATEGY', 'hash'),
-    'preserve_original_name' => env('ATTACHMENTS_PRESERVE_ORIGINAL_NAME', true),
+    'naming_strategy' => env('ATTACHMENTS_NAMING_STRATEGY', 'random'),
     'temporary_url_expiration' => env('ATTACHMENTS_TEMPORARY_URL_EXPIRATION', 60),
-    'events' => [
-        'enabled' => env('ATTACHMENTS_EVENTS_ENABLED', true),
-    ],
-    'metadata' => [
-        'enabled' => env('ATTACHMENTS_METADATA_ENABLED', true),
-        'auto_capture' => [
-            'original_name' => true,
-            'uploaded_at' => true,
-            'uploaded_by' => false,
-        ],
-    ],
 ];
 ```
 
@@ -129,89 +112,35 @@ ATTACHMENTS_DELETE_ON_REPLACE=false
 
 ---
 
-### `validation`
-
-**Type:** `array|string|null`  
-**Default:** See below
-
-Default validation rules for file uploads.
-
-**Default Value:**
-```php
-'validation' => [
-    'file',
-    'max:10240', // 10MB
-    'mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,xls,xlsx,zip,rar',
-],
-```
-
-**Array Format:**
-```php
-'validation' => ['file', 'image', 'max:2048'],
-```
-
-**String Format:**
-```php
-'validation' => 'file|image|max:2048',
-```
-
-**Disable Validation:**
-```php
-'validation' => null,
-```
-
-**Common Rules:**
-- `'file'` - Must be a file
-- `'image'` - Must be an image
-- `'max:2048'` - Max size in KB
-- `'min:100'` - Min size in KB
-- `'mimes:jpg,png'` - Allowed extensions
-- `'mimetypes:image/jpeg'` - Allowed MIME types
-- `'dimensions:min_width=100'` - Image dimensions
-
----
-
 ### `naming_strategy`
 
 **Type:** `string`  
-**Default:** `'hash'`  
+**Default:** `'random'`  
 **Environment Variable:** `ATTACHMENTS_NAMING_STRATEGY`
 
-Strategy for naming uploaded files.
+How stored files are named. Accepts a built-in strategy name or the fully-qualified class name of a custom strategy.
 
-**Valid Values:**
-- `'hash'` - Use Laravel's hash-based naming (default)
-- `'original'` - Keep original filename (sanitized)
-- `'uuid'` - Generate UUID for filename
+**Built-in Values:**
+- `'random'` (default) - A random 40-character name plus the original extension
+- `'uuid'` - A UUID name plus the original extension
+- `'original'` - The sanitized client filename, with a random suffix on collision, falling back to `'random'` when there is no client name
+
+**Custom Strategy:**
+
+Pass the class name of any class implementing `NiftyCo\Attachments\Naming\NamingStrategy`. It is resolved from the container. See [Configuration → Naming Strategies](../configuration.md#naming-strategies).
+
+```php
+'naming_strategy' => \App\Attachments\DatePrefixedStrategy::class,
+```
 
 **Example:**
 ```php
-'naming_strategy' => env('ATTACHMENTS_NAMING_STRATEGY', 'hash'),
+'naming_strategy' => env('ATTACHMENTS_NAMING_STRATEGY', 'random'),
 ```
 
 **Environment:**
 ```env
 ATTACHMENTS_NAMING_STRATEGY=uuid
-```
-
----
-
-### `preserve_original_name`
-
-**Type:** `boolean`  
-**Default:** `true`  
-**Environment Variable:** `ATTACHMENTS_PRESERVE_ORIGINAL_NAME`
-
-Store the original filename in metadata.
-
-**Example:**
-```php
-'preserve_original_name' => env('ATTACHMENTS_PRESERVE_ORIGINAL_NAME', true),
-```
-
-**Environment:**
-```env
-ATTACHMENTS_PRESERVE_ORIGINAL_NAME=false
 ```
 
 ---
@@ -234,73 +163,6 @@ Default expiration time in minutes for temporary URLs.
 ATTACHMENTS_TEMPORARY_URL_EXPIRATION=120
 ```
 
----
-
-### `events.enabled`
-
-**Type:** `boolean`  
-**Default:** `true`  
-**Environment Variable:** `ATTACHMENTS_EVENTS_ENABLED`
-
-Enable or disable attachment lifecycle events.
-
-**Example:**
-```php
-'events' => [
-    'enabled' => env('ATTACHMENTS_EVENTS_ENABLED', true),
-],
-```
-
-**Environment:**
-```env
-ATTACHMENTS_EVENTS_ENABLED=false
-```
-
----
-
-### `metadata.enabled`
-
-**Type:** `boolean`  
-**Default:** `true`  
-**Environment Variable:** `ATTACHMENTS_METADATA_ENABLED`
-
-Enable metadata support for attachments.
-
-**Example:**
-```php
-'metadata' => [
-    'enabled' => env('ATTACHMENTS_METADATA_ENABLED', true),
-],
-```
-
-**Environment:**
-```env
-ATTACHMENTS_METADATA_ENABLED=false
-```
-
----
-
-### `metadata.auto_capture`
-
-**Type:** `array`  
-**Default:** See below
-
-Configure which metadata fields are automatically captured.
-
-**Default Value:**
-```php
-'auto_capture' => [
-    'original_name' => true,
-    'uploaded_at' => true,
-    'uploaded_by' => false,
-],
-```
-
-**Fields:**
-- `original_name` - Store original filename
-- `uploaded_at` - Store upload timestamp
-- `uploaded_by` - Store authenticated user ID
-
 ## Environment Variables
 
 Quick reference for all environment variables:
@@ -315,15 +177,10 @@ ATTACHMENTS_AUTO_CLEANUP=true
 ATTACHMENTS_DELETE_ON_REPLACE=true
 
 # File Naming
-ATTACHMENTS_NAMING_STRATEGY=hash
-ATTACHMENTS_PRESERVE_ORIGINAL_NAME=true
+ATTACHMENTS_NAMING_STRATEGY=random
 
 # URLs
 ATTACHMENTS_TEMPORARY_URL_EXPIRATION=60
-
-# Features
-ATTACHMENTS_EVENTS_ENABLED=true
-ATTACHMENTS_METADATA_ENABLED=true
 ```
 
 ## Next Steps

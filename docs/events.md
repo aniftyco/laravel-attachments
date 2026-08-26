@@ -1,72 +1,104 @@
 # Events
 
-Laravel Attachments dispatches events during the attachment lifecycle, allowing you to hook into file operations and perform custom actions.
+Laravel Attachments dispatches events as attachments change on your models, so you can hook in to process files, scan them, log activity, or back them up.
+
+Events are always dispatched. There is no toggle to turn them on or off; if you do not register a listener, nothing happens. They fire from the model observer after the row is saved or deleted, so the model's key is always available on the event.
 
 ## Available Events
 
 ### AttachmentCreated
 
-Dispatched when a new attachment is created:
+Dispatched when an attachment is set on an attribute that had none:
 
 ```php
-use NiftyCo\Attachments\Events\AttachmentCreated;
+namespace NiftyCo\Attachments\Events;
+
+use NiftyCo\Attachments\Attachment;
 
 class AttachmentCreated
 {
     public function __construct(
-        public Attachment $attachment
+        public Attachment $attachment,
+        public ?string $modelClass = null,
+        public ?string $modelId = null,
+        public ?string $attribute = null
     ) {}
 }
 ```
 
 ### AttachmentUpdated
 
-Dispatched when an attachment is updated:
+Dispatched when an attachment is replaced with a different file. It also carries the old attachment:
 
 ```php
-use NiftyCo\Attachments\Events\AttachmentUpdated;
+namespace NiftyCo\Attachments\Events;
+
+use NiftyCo\Attachments\Attachment;
 
 class AttachmentUpdated
 {
     public function __construct(
         public Attachment $attachment,
-        public Attachment $oldAttachment
+        public ?Attachment $oldAttachment = null,
+        public ?string $modelClass = null,
+        public ?string $modelId = null,
+        public ?string $attribute = null
     ) {}
 }
 ```
 
 ### AttachmentDeleted
 
-Dispatched when an attachment is deleted:
+Dispatched when an attachment is cleared or its model is deleted:
 
 ```php
-use NiftyCo\Attachments\Events\AttachmentDeleted;
+namespace NiftyCo\Attachments\Events;
+
+use NiftyCo\Attachments\Attachment;
 
 class AttachmentDeleted
 {
     public function __construct(
-        public Attachment $attachment
+        public Attachment $attachment,
+        public ?string $modelClass = null,
+        public ?string $modelId = null,
+        public ?string $attribute = null
     ) {}
 }
 ```
 
+Every event carries the source: `modelClass` and `modelId` identify the model row, and `attribute` is the cast attribute the attachment lives on.
+
+## When Events Fire
+
+On save, the observer diffs each attachment attribute's original value against its new one:
+
+| Change on save                                   | Event dispatched            |
+| ------------------------------------------------ | --------------------------- |
+| Attachment set where there was none              | `AttachmentCreated`         |
+| Attachment replaced with a different file        | `AttachmentUpdated` (old attachment attached) |
+| Attachment cleared to `null`                     | `AttachmentDeleted`         |
+| Collection: item added                           | `AttachmentCreated` per new item |
+| Collection: item removed                         | `AttachmentDeleted` per removed item |
+| Collection: item unchanged                       | Nothing                     |
+
+On delete, the observer dispatches `AttachmentDeleted` for each attachment. Soft deletes are skipped: a soft-deleted model keeps its files and fires no event. Only a force delete (or a hard delete on a model without `SoftDeletes`) dispatches the deletion events. See [Automatic Cleanup](cleanup.md).
+
 ## Listening to Events
 
-### Creating a Listener
-
-Generate a listener:
+Laravel discovers listeners automatically by the event type they type-hint. Generate one:
 
 ```bash
 php artisan make:listener ProcessUploadedImage
 ```
 
-Implement the listener:
+Type-hint the event in `handle()`:
 
 ```php
 namespace App\Listeners;
 
-use NiftyCo\Attachments\Events\AttachmentCreated;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use NiftyCo\Attachments\Events\AttachmentCreated;
 
 class ProcessUploadedImage implements ShouldQueue
 {
@@ -74,46 +106,17 @@ class ProcessUploadedImage implements ShouldQueue
     {
         $attachment = $event->attachment;
 
-        // Only process images
-        if (!$attachment->isImage()) {
+        if (! $attachment->isImage()) {
             return;
         }
 
-        // Process the image
         $this->createThumbnail($attachment);
-        $this->optimizeImage($attachment);
     }
 
     private function createThumbnail($attachment): void
     {
         // Create thumbnail logic
     }
-
-    private function optimizeImage($attachment): void
-    {
-        // Optimize image logic
-    }
-}
-```
-
-### Registering the Listener
-
-Register in `EventServiceProvider`:
-
-```php
-namespace App\Providers;
-
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use NiftyCo\Attachments\Events\AttachmentCreated;
-use App\Listeners\ProcessUploadedImage;
-
-class EventServiceProvider extends ServiceProvider
-{
-    protected $listen = [
-        AttachmentCreated::class => [
-            ProcessUploadedImage::class,
-        ],
-    ];
 }
 ```
 
@@ -121,14 +124,13 @@ class EventServiceProvider extends ServiceProvider
 
 ### Image Processing
 
-Process images after upload:
+Process images after they are stored:
 
 ```php
 namespace App\Listeners;
 
-use NiftyCo\Attachments\Events\AttachmentCreated;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\Facades\Image;
+use NiftyCo\Attachments\Events\AttachmentCreated;
 
 class ProcessUploadedImage
 {
@@ -136,38 +138,27 @@ class ProcessUploadedImage
     {
         $attachment = $event->attachment;
 
-        if (!$attachment->isImage()) {
+        if (! $attachment->isImage()) {
             return;
         }
 
         $disk = Storage::disk($attachment->disk());
-        $path = $attachment->path();
+        $thumbnailPath = 'thumbnails/'.$attachment->path();
 
-        // Create thumbnail
-        $image = Image::make($disk->get($path));
-        $thumbnail = $image->fit(200, 200);
-
-        $thumbnailPath = str_replace(
-            $attachment->name(),
-            'thumbnails/' . $attachment->name(),
-            $path
-        );
-
-        $disk->put($thumbnailPath, $thumbnail->encode());
-
-        // Store thumbnail path in metadata
-        $attachment->setMetadata('thumbnail', $thumbnailPath);
+        // Read the source, resize with your image library, then write the thumbnail
+        $disk->put($thumbnailPath, $this->resize($disk->get($attachment->path())));
     }
 }
 ```
 
 ### Virus Scanning
 
-Scan uploaded files for viruses:
+Scan stored files and remove anything infected:
 
 ```php
 namespace App\Listeners;
 
+use Illuminate\Support\Facades\Storage;
 use NiftyCo\Attachments\Events\AttachmentCreated;
 use App\Services\VirusScanner;
 
@@ -182,103 +173,88 @@ class ScanUploadedFile
         $attachment = $event->attachment;
 
         $result = $this->scanner->scan(
-            Storage::disk($attachment->disk)->path($attachment->name)
+            Storage::disk($attachment->disk())->path($attachment->path())
         );
 
         if ($result->isInfected()) {
-            // Delete infected file
             $attachment->delete();
 
-            // Log the incident
             logger()->warning('Infected file detected', [
-                'file' => $attachment->name,
+                'file' => $attachment->path(),
                 'virus' => $result->virusName(),
             ]);
 
             throw new \Exception('File is infected with malware');
         }
-
-        // Mark as scanned
-        $attachment->setMetadata('scanned', true);
-        $attachment->setMetadata('scanned_at', now()->toIso8601String());
     }
 }
 ```
 
 ### Logging
 
-Log all attachment operations:
+Log attachment activity, using the model identity the event carries:
 
 ```php
 namespace App\Listeners;
 
+use Illuminate\Support\Facades\Log;
 use NiftyCo\Attachments\Events\AttachmentCreated;
 use NiftyCo\Attachments\Events\AttachmentDeleted;
-use Illuminate\Support\Facades\Log;
 
 class LogAttachmentOperations
 {
     public function handleCreated(AttachmentCreated $event): void
     {
         Log::info('Attachment created', [
-            'name' => $event->attachment->name,
-            'size' => $event->attachment->size,
-            'disk' => $event->attachment->disk,
-            'user' => auth()->id(),
+            'path' => $event->attachment->path(),
+            'size' => $event->attachment->size(),
+            'disk' => $event->attachment->disk(),
+            'model' => $event->modelClass,
+            'model_id' => $event->modelId,
+            'attribute' => $event->attribute,
         ]);
     }
 
     public function handleDeleted(AttachmentDeleted $event): void
     {
         Log::info('Attachment deleted', [
-            'name' => $event->attachment->name,
-            'user' => auth()->id(),
+            'path' => $event->attachment->path(),
+            'model' => $event->modelClass,
+            'model_id' => $event->modelId,
         ]);
     }
 }
 ```
 
-Register multiple event handlers:
+Register both handlers where you subscribe to events, or split them into dedicated listener classes and let discovery wire them up.
 
-```php
-protected $listen = [
-    AttachmentCreated::class => [
-        LogAttachmentOperations::class . '@handleCreated',
-    ],
-    AttachmentDeleted::class => [
-        LogAttachmentOperations::class . '@handleDeleted',
-    ],
-];
-```
+### Cleaning Up After a Replacement
 
-### Notifications
-
-Notify users when files are uploaded:
+`AttachmentUpdated` carries the file that was replaced, which is handy when you keep derived files alongside the original:
 
 ```php
 namespace App\Listeners;
 
-use NiftyCo\Attachments\Events\AttachmentCreated;
-use App\Notifications\FileUploadedNotification;
+use Illuminate\Support\Facades\Storage;
+use NiftyCo\Attachments\Events\AttachmentUpdated;
 
-class NotifyFileUpload
+class RemoveStaleThumbnail
 {
-    public function handle(AttachmentCreated $event): void
+    public function handle(AttachmentUpdated $event): void
     {
-        $user = auth()->user();
-
-        if (!$user) {
+        if ($event->oldAttachment === null) {
             return;
         }
 
-        $user->notify(new FileUploadedNotification($event->attachment));
+        Storage::disk($event->oldAttachment->disk())
+            ->delete('thumbnails/'.$event->oldAttachment->path());
     }
 }
 ```
 
 ### Backup to Cloud
 
-Automatically backup files to a secondary location:
+Copy each new file to a secondary location:
 
 ```php
 namespace App\Listeners;
@@ -289,54 +265,30 @@ class BackupAttachment
 {
     public function handle(AttachmentCreated $event): void
     {
-        $attachment = $event->attachment;
-
-        // Copy to backup disk
-        $attachment->copy('s3-backup', 'backups/' . now()->format('Y/m'));
+        $event->attachment->duplicate('s3-backup', 'backups/'.now()->format('Y/m'));
     }
 }
 ```
 
-## Disabling Events
+## Faking Events in Tests
 
-### Globally
-
-Disable events in configuration:
-
-```php
-// config/attachments.php
-return [
-    'events' => [
-        'enabled' => false,
-    ],
-];
-```
-
-Or via environment variable:
-
-```env
-ATTACHMENTS_EVENTS_ENABLED=false
-```
-
-### Temporarily
-
-Disable events for specific operations:
+To assert an event fired, or to silence listeners for a specific test, fake it:
 
 ```php
 use Illuminate\Support\Facades\Event;
+use NiftyCo\Attachments\Events\AttachmentCreated;
 
-Event::fake([
-    AttachmentCreated::class,
-]);
+Event::fake([AttachmentCreated::class]);
 
-// Upload without triggering events
 $user->avatar = Attachment::fromFile($file, folder: 'avatars');
 $user->save();
+
+Event::assertDispatched(AttachmentCreated::class);
 ```
 
 ## Queued Listeners
 
-For time-consuming operations, use queued listeners:
+For slow work, implement `ShouldQueue` so the listener runs on a queue:
 
 ```php
 namespace App\Listeners;
@@ -357,16 +309,7 @@ class ProcessUploadedImage implements ShouldQueue
 
 ## Best Practices
 
-### 1. Use Queued Listeners for Heavy Operations
-
-```php
-class ProcessUploadedImage implements ShouldQueue
-{
-    // Heavy processing in background
-}
-```
-
-### 2. Handle Failures Gracefully
+### Handle Failures Gracefully
 
 ```php
 public function handle(AttachmentCreated $event): void
@@ -375,27 +318,19 @@ public function handle(AttachmentCreated $event): void
         $this->processImage($event->attachment);
     } catch (\Exception $e) {
         Log::error('Image processing failed', [
-            'attachment' => $event->attachment->name,
+            'attachment' => $event->attachment->path(),
             'error' => $e->getMessage(),
         ]);
     }
 }
 ```
 
-### 3. Keep Listeners Focused
+### Keep Listeners Focused
 
-```php
-// Good: Single responsibility
-class CreateThumbnail { }
-class OptimizeImage { }
-class ScanForViruses { }
-
-// Bad: Multiple responsibilities
-class ProcessUploadedFile { }
-```
+Give each listener one job. A `CreateThumbnail` listener and an `OptimizeImage` listener are easier to test and reason about than a single `ProcessUploadedFile` that does both.
 
 ## Next Steps
 
 - Learn about [Testing](testing.md)
 - Explore [API Resources](api-resources.md)
-- Configure [Metadata](metadata.md)
+- Configure [Automatic Cleanup](cleanup.md)

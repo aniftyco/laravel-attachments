@@ -4,21 +4,20 @@ Welcome to the Laravel Attachments documentation. This package provides a simple
 
 ## What is Laravel Attachments?
 
-Laravel Attachments turns any field on your Eloquent models into attachments with automatic file management, validation, and cleanup. It provides a type-safe, developer-friendly API for handling single or multiple file uploads.
+Laravel Attachments turns any field on your Eloquent models into attachments with automatic file management and cleanup. It provides a type-safe, developer-friendly API for handling single or multiple file uploads.
 
 ## Key Features
 
 - 🎯 **Simple API** - Easy-to-use casts for single and multiple attachments
 - 🔄 **Automatic Cleanup** - Automatically delete files when models are deleted
-- ✅ **File Validation** - Built-in validation for file size, type, and extensions
 - 🔗 **URL Generation** - Generate public and temporary URLs for attachments
 - 📦 **Multiple Storage Disks** - Support for any Laravel filesystem disk
 - 🗂️ **Organized Storage** - Automatic folder organization with customizable paths
+- 🏷️ **Naming Strategies** - Built-in random, UUID, and original strategies, plus your own
 - 🔒 **Type Safe** - Full type hints and IDE autocomplete support
 - 🎨 **Filament Integration** - Ready-to-use Filament form fields and table columns
 - 🧪 **Testing Helpers** - Built-in testing utilities for easy test writing
 - 📡 **Events** - Listen to attachment lifecycle events
-- 📊 **Metadata Support** - Store additional information with your attachments
 
 ## Quick Start
 
@@ -84,14 +83,12 @@ echo $user->avatar->readableSize();
 
 - [Single Attachments](single-attachments.md)
 - [Multiple Attachments](multiple-attachments.md)
-- [File Validation](validation.md)
 - [Storage & Disks](storage.md)
 
 ### Advanced Features
 
 - [Automatic Cleanup](cleanup.md)
 - [URL Generation](urls.md)
-- [Metadata](metadata.md)
 - [Events](events.md)
 - [API Resources](api-resources.md)
 
@@ -108,8 +105,8 @@ echo $user->avatar->readableSize();
 
 ## Requirements
 
-- PHP 8.1 or higher
-- Laravel 11.0 or higher
+- PHP 8.5 or higher
+- Laravel 13.0 or higher
 
 ## Support
 

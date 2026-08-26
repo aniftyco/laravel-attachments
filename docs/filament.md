@@ -25,7 +25,7 @@ public static function form(Form $form): Form
         AttachmentField::make('avatar')
             ->label('Profile Picture')
             ->disk('public')
-            ->folder('avatars')
+            ->directory('avatars')
             ->required(),
     ]);
 }
@@ -42,7 +42,7 @@ AttachmentField::make('avatar')
     ->maxSize(2048) // 2MB
     ->acceptedFileTypes(['image/jpeg', 'image/png'])
     ->disk('public')
-    ->folder('avatars');
+    ->directory('avatars');
 ```
 
 ### Document Uploads
@@ -55,7 +55,7 @@ AttachmentField::make('document')
     ->acceptedFileTypes(['application/pdf', 'application/msword'])
     ->maxSize(10240) // 10MB
     ->disk('local')
-    ->folder('documents');
+    ->directory('documents');
 ```
 
 ### Multiple Files
@@ -69,7 +69,7 @@ AttachmentField::make('images')
     ->images()
     ->maxFiles(10)
     ->disk('public')
-    ->folder('gallery');
+    ->directory('gallery');
 ```
 
 ### Field Options
@@ -78,7 +78,7 @@ AttachmentField::make('images')
 AttachmentField::make('avatar')
     // Storage
     ->disk('s3')
-    ->folder('user-avatars')
+    ->directory('user-avatars')
     
     // Validation
     ->required()
@@ -108,7 +108,7 @@ AttachmentField::make('avatar')
 
 ### AttachmentColumn
 
-Display attachments in Filament tables:
+`AttachmentColumn` extends Filament's `TextColumn`. For a single-attachment attribute it shows the file's human-readable size, prefixes a file-type icon (image, PDF, video, audio, document, or a generic paper clip), and links to the file, opening it in a new tab when clicked:
 
 ```php
 use NiftyCo\Attachments\Filament\AttachmentColumn;
@@ -123,47 +123,13 @@ public static function table(Table $table): Table
 }
 ```
 
-### Image Columns
-
-Display images with preview:
+The icon and link are configured for you by `make()`. Because it is a `TextColumn`, the rest of Filament's text-column API is available:
 
 ```php
 AttachmentColumn::make('avatar')
-    ->label('Avatar')
-    ->circular()
-    ->size(40);
-```
-
-### Column Options
-
-```php
-AttachmentColumn::make('avatar')
-    // Display
-    ->circular()
-    ->square()
-    ->size(60)
-    ->height(80)
-    ->width(80)
-    
-    // Behavior
-    ->openUrlInNewTab()
-    ->defaultImageUrl('/images/default-avatar.png')
-    
-    // UI
     ->label('Profile Picture')
-    ->alignCenter();
-```
-
-### Multiple Images Column
-
-Display multiple images:
-
-```php
-AttachmentColumn::make('images')
-    ->label('Gallery')
-    ->limit(3)
-    ->ring(2)
-    ->overlap(4);
+    ->alignCenter()
+    ->toggleable();
 ```
 
 ## Complete Resource Example
@@ -199,7 +165,7 @@ class UserResource extends Resource
                 ->images()
                 ->maxSize(2048)
                 ->disk('public')
-                ->folder('avatars')
+                ->directory('avatars')
                 ->imagePreviewHeight(200)
                 ->imageCropAspectRatio('1:1'),
         ]);
@@ -215,9 +181,7 @@ class UserResource extends Resource
                 ->searchable(),
             
             AttachmentColumn::make('avatar')
-                ->label('Avatar')
-                ->circular()
-                ->size(40),
+                ->label('Avatar'),
         ]);
     }
 }
@@ -257,7 +221,7 @@ class PostResource extends Resource
                 ->maxFiles(10)
                 ->maxSize(5120)
                 ->disk('public')
-                ->folder('posts')
+                ->directory('posts')
                 ->imagePreviewHeight(150)
                 ->columnSpan('full'),
         ]);
@@ -269,14 +233,15 @@ class PostResource extends Resource
             Tables\Columns\TextColumn::make('title')
                 ->searchable(),
             
-            AttachmentColumn::make('images')
+            Tables\Columns\TextColumn::make('images')
                 ->label('Images')
-                ->limit(3)
-                ->size(40),
+                ->formatStateUsing(fn ($state) => $state instanceof \NiftyCo\Attachments\Attachments ? $state->count().' files' : null),
         ]);
     }
 }
 ```
+
+`AttachmentColumn` renders a single attachment. For a collection attribute, use a plain `TextColumn` as above, or loop over the attachments in a custom view.
 
 ## Validation
 

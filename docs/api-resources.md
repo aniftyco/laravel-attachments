@@ -18,15 +18,17 @@ return $resource;
 
 ```json
 {
-  "url": "https://example.com/storage/avatars/abc123.jpg",
-  "name": "abc123.jpg",
-  "size": 153600,
-  "mime": "image/jpeg",
-  "readable_size": "150 KB",
-  "metadata": {
-    "original_name": "profile.jpg",
-    "uploaded_at": "2024-01-15T10:30:00Z"
-  }
+  "data": {
+    "path": "avatars/abc123.jpg",
+    "url": "https://example.com/storage/avatars/abc123.jpg",
+    "size": 153600,
+    "readable_size": "150 KB",
+    "mime": "image/jpeg",
+    "extension": "jpg",
+    "disk": "public",
+    "folder": "avatars"
+  },
+  "type": "image"
 }
 ```
 
@@ -48,15 +50,15 @@ return $collection;
 {
   "data": [
     {
+      "path": "posts/image1.jpg",
       "url": "https://example.com/storage/posts/image1.jpg",
-      "name": "image1.jpg",
       "size": 204800,
       "mime": "image/jpeg",
       "readable_size": "200 KB"
     },
     {
+      "path": "posts/image2.jpg",
       "url": "https://example.com/storage/posts/image2.jpg",
-      "name": "image2.jpg",
       "size": 307200,
       "mime": "image/jpeg",
       "readable_size": "300 KB"
@@ -97,8 +99,8 @@ Response:
   "name": "John Doe",
   "email": "john@example.com",
   "avatar": {
+    "path": "avatars/abc123.jpg",
     "url": "https://example.com/storage/avatars/abc123.jpg",
-    "name": "abc123.jpg",
     "size": 153600,
     "mime": "image/jpeg",
     "readable_size": "150 KB"
@@ -138,8 +140,8 @@ Response:
   "images": {
     "data": [
       {
+        "path": "posts/image1.jpg",
         "url": "https://example.com/storage/posts/image1.jpg",
-        "name": "image1.jpg",
         "size": 204800,
         "mime": "image/jpeg",
         "readable_size": "200 KB"
@@ -183,9 +185,8 @@ class CustomAttachmentResource extends BaseResource
     public function toArray($request): array
     {
         return array_merge(parent::toArray($request), [
-            'thumbnail_url' => $this->metadata('thumbnail_url'),
-            'is_processed' => $this->metadata('processed', false),
-            'uploaded_by' => $this->metadata('uploaded_by'),
+            'is_image' => $this->isImage(),
+            'download_url' => route('attachments.download', ['path' => $this->path()]),
         ]);
     }
 }
@@ -195,21 +196,6 @@ Usage:
 
 ```php
 return new CustomAttachmentResource($user->avatar);
-```
-
-Response:
-
-```json
-{
-  "url": "https://example.com/storage/avatars/abc123.jpg",
-  "name": "abc123.jpg",
-  "size": 153600,
-  "mime": "image/jpeg",
-  "readable_size": "150 KB",
-  "thumbnail_url": "https://example.com/storage/thumbnails/abc123.jpg",
-  "is_processed": true,
-  "uploaded_by": 1
-}
 ```
 
 ### Removing Fields
@@ -225,7 +211,7 @@ class MinimalAttachmentResource extends BaseResource
     {
         return [
             'url' => $this->url(),
-            'name' => $this->name(),
+            'path' => $this->path(),
         ];
     }
 }
@@ -247,7 +233,7 @@ class SecureAttachmentResource extends BaseResource
         $data = parent::toArray($request);
 
         // Replace public URL with temporary URL
-        if ($this->disk === 's3-private') {
+        if ($this->disk() === 's3-private') {
             $data['url'] = $this->temporaryUrl(now()->addHour());
         }
 
@@ -355,7 +341,7 @@ public function toArray($request): array
 {
     return [
         'url' => $this->url(),
-        'name' => $this->name(),
+        'path' => $this->path(),
     ];
 }
 

@@ -91,7 +91,7 @@ return $user->avatar->download('profile-picture.jpg');
 
 // Force download (Content-Disposition: attachment)
 return response()->download(
-    Storage::disk($user->avatar->disk())->path($user->avatar->name()),
+    Storage::disk($user->avatar->disk())->path($user->avatar->path()),
     'custom-name.jpg'
 );
 ```
@@ -303,4 +303,3 @@ php artisan config:clear
 
 - Learn about [API Resources](api-resources.md)
 - Configure [Storage & Disks](storage.md)
-- Explore [Metadata](metadata.md)

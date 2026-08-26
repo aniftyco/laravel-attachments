@@ -74,7 +74,7 @@ $post->delete();
 
 ### Soft Deletes
 
-Cleanup respects soft deletes:
+Cleanup skips soft deletes. A soft-deleted model keeps its files and fires no `AttachmentDeleted` event, so the record and its attachments can still be restored. Files are purged and the event fired only on a force delete (or a hard delete on a model that does not use `SoftDeletes`):
 
 ```php
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -92,10 +92,10 @@ class User extends Model
     }
 }
 
-// Soft delete - files are NOT deleted
+// Soft delete - files are kept, no AttachmentDeleted event
 $user->delete();
 
-// Force delete - files ARE deleted
+// Force delete - files are removed, AttachmentDeleted fires
 $user->forceDelete();
 
 // Restore - files remain intact
@@ -144,16 +144,25 @@ $user->delete();
 
 ### How It Works
 
-By default, when you replace an attachment with a new one, the old file is automatically deleted:
+By default, when you replace an attachment with a new one, the old file is
+automatically deleted. This cleanup runs **on save** (never at assignment), so a
+rollback or failed validation between assigning and saving never orphans a live
+record — the old file only disappears once the replacement is persisted.
 
 ```php
 // User has an existing avatar
 $user->avatar; // "old-avatar.jpg"
 
-// Replace with new avatar - old file is automatically deleted
+// Assigning does NOT delete anything yet...
 $user->avatar = Attachment::fromFile($newFile, folder: 'avatars');
+
+// ...the old file is purged only when the replacement is saved.
 $user->save();
 ```
+
+> Replacement cleanup is driven by the model observer, which is registered by the
+> `HasAttachments` (or `HasAttachmentCleanup`) trait. A model that uses neither
+> trait keeps its old files on replacement.
 
 ### Disabling Replacement Cleanup
 
@@ -186,7 +195,7 @@ $post->images = Attachments::fromFiles($newFiles, folder: 'posts');
 $post->save();
 
 // Remove specific files
-$post->images = $post->images->filter(fn($img) => $img->name() !== 'old.jpg');
+$post->images = $post->images->filter(fn($img) => $img->path() !== 'old.jpg');
 $post->save();
 ```
 
@@ -367,7 +376,7 @@ public function test_avatar_deleted_with_user()
 
 ```php
 // Backup before deleting
-$user->avatar->copy('s3', 'backups/avatars');
+$user->avatar->duplicate('s3', 'backups/avatars');
 $user->delete();
 ```
 

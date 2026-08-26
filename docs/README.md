@@ -13,13 +13,11 @@ This directory contains comprehensive documentation for the Laravel Attachments 
 ### Core Concepts
 - **[single-attachments.md](single-attachments.md)** - Working with single file attachments
 - **[multiple-attachments.md](multiple-attachments.md)** - Working with multiple file attachments
-- **[validation.md](validation.md)** - File validation rules and examples
 - **[storage.md](storage.md)** - Storage disks, folders, and organization
 
 ### Advanced Features
 - **[cleanup.md](cleanup.md)** - Automatic file cleanup and deletion strategies
 - **[urls.md](urls.md)** - URL generation for public and private files
-- **[metadata.md](metadata.md)** - Storing and accessing attachment metadata
 - **[events.md](events.md)** - Listening to attachment lifecycle events
 - **[api-resources.md](api-resources.md)** - Transforming attachments for JSON APIs
 
@@ -45,9 +43,6 @@ This directory contains comprehensive documentation for the Laravel Attachments 
 **Upload multiple files (gallery, documents)**
 → See [multiple-attachments.md](multiple-attachments.md)
 
-**Validate file uploads**
-→ See [validation.md](validation.md)
-
 **Store files on S3 or other cloud storage**
 → See [storage.md](storage.md)
 
@@ -56,9 +51,6 @@ This directory contains comprehensive documentation for the Laravel Attachments 
 
 **Generate URLs for file downloads**
 → See [urls.md](urls.md)
-
-**Store additional information with files**
-→ See [metadata.md](metadata.md)
 
 **Process files after upload (thumbnails, optimization)**
 → See [events.md](events.md)

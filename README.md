@@ -16,8 +16,8 @@
 
 ## Requirements
 
-- PHP 8.3 or higher
-- Laravel 12.0 or higher
+- PHP 8.5 or higher
+- Laravel 13.0 or higher
 
 ## Installation
 
@@ -155,14 +155,12 @@ class PostController
 ```php
 $attachment = $user->avatar;
 
-$attachment->name();      // File name
+$attachment->path();      // File path in storage (folder/name)
 $attachment->disk();      // Storage disk name
 $attachment->folder();    // Folder path
-$attachment->path();      // Full path (folder/name) - alias for name()
 $attachment->size();      // File size in bytes
-$attachment->mimeType();  // MIME type
-$attachment->extname();   // File extension (e.g., 'jpg')
-$attachment->extension(); // Alias for extname()
+$attachment->mime();      // MIME type
+$attachment->extension(); // File extension (e.g., 'jpg')
 $attachment->url();       // Public URL
 ```
 
@@ -216,7 +214,7 @@ foreach ($post->images as $image) {
 $post->images->attach($file, folder: 'posts');
 
 // Remove an attachment
-$post->images = $post->images->filter(fn($img) => $img->name() !== 'old.jpg');
+$post->images = $post->images->filter(fn($img) => $img->path() !== 'old.jpg');
 $post->save();
 ```
 
@@ -297,7 +295,7 @@ return [
     | This should match one of the disks defined in config/filesystems.php
     |
     */
-    'disk' => env('ATTACHMENTS_DISK', 'public'),
+    'disk' => env('ATTACHMENTS_DISK', env('FILESYSTEM_DISK', 'public')),
 
     /*
     |--------------------------------------------------------------------------
@@ -334,6 +332,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | File Naming Strategy
+    |--------------------------------------------------------------------------
+    |
+    | How stored files are named. Use one of the built-in strategies ('random',
+    | 'uuid', 'original') or the class name of a custom NamingStrategy.
+    |
+    */
+    'naming_strategy' => env('ATTACHMENTS_NAMING_STRATEGY', 'random'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Temporary URL Expiration
     |--------------------------------------------------------------------------
     |
@@ -341,7 +350,7 @@ return [
     | This is used when calling temporaryUrl() without an expiration parameter.
     |
     */
-    'temporary_url_expiration' => env('ATTACHMENTS_TEMP_URL_EXPIRATION', 60),
+    'temporary_url_expiration' => env('ATTACHMENTS_TEMPORARY_URL_EXPIRATION', 60),
 ];
 ```
 

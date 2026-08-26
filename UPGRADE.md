@@ -1,123 +1,87 @@
 # Upgrade Guide
 
-This guide will help you upgrade between major versions of the Attachments for Laravel package.
+## Upgrading Within 1.x
 
-## Upgrading to 1.0.0 from Pre-release
+This release stays in the 1.x line but contains breaking changes. Read this guide before upgrading and update your code where it applies.
 
-Version 1.0.0 is the first stable release. If you were using a pre-release version, please review the following changes:
+### Platform Requirements
 
-### Configuration Changes
+The minimum platform has moved up:
 
-The configuration file has been updated with new options. Publish the latest configuration:
+- PHP 8.5 or higher
+- Laravel 13.0 or higher
+
+Upgrade your application to these versions first.
+
+### Removed: The Metadata API
+
+The entire metadata concept has been removed. Attachments no longer carry a custom metadata bag.
+
+Remove any use of:
+
+- `Attachment::fromFile(..., metadata: [...])` and `fromFiles(..., metadata: [...])`
+- `$attachment->metadata()`, `setMetadata()`, `hasMetadata()`
+- `withMetadata()`, `getMeta()`, `setMeta()`, `hasMeta()`, `removeMeta()`
+- The `metadata` block in `config/attachments.php`
+
+If you relied on storing extra data alongside a file (an uploader ID, a description), keep that data on your own model column or a related table instead.
+
+### Renamed Accessors
+
+Four accessors were renamed. The old names no longer exist and calling them is a fatal error.
+
+| Old            | New              |
+| -------------- | ---------------- |
+| `name()`       | `path()`         |
+| `mimeType()`   | `mime()`         |
+| `extname()`    | `extension()`    |
+| `tempUrl()`    | `temporaryUrl()` |
+
+Search your codebase and views for these calls and update each one:
+
+```php
+// Before
+$attachment->name();
+$attachment->mimeType();
+$attachment->extname();
+$attachment->tempUrl(now()->addHour());
+
+// After
+$attachment->path();
+$attachment->mime();
+$attachment->extension();
+$attachment->temporaryUrl(now()->addHour());
+```
+
+The stored JSON keys are unchanged (`disk`, `name`, `size`, `extname`, `mimeType`), so no data migration is needed. Only the PHP accessors changed.
+
+### Removed Config Keys
+
+Delete these keys from your published `config/attachments.php`:
+
+- `preserve_original_name`
+- The entire `events` block (`events.enabled`)
+- The entire `metadata` block
+
+The current keys are `disk`, `folder`, `auto_cleanup`, `delete_on_replace`, `naming_strategy`, and `temporary_url_expiration`. Republish the config to see the current file:
 
 ```sh
 php artisan vendor:publish --tag=attachments-config --force
 ```
 
-Review the new configuration options:
-- `events.enabled` - Control event dispatching
-- `validation` - Default validation rules
+### Events Are Always Dispatched
 
-### New Features
+There is no longer an `events.enabled` toggle. Events always dispatch; if you do not register a listener, nothing happens.
 
-#### Blueprint Macros
+Events now fire from the model observer after the row is saved or deleted, not from the casts. The model's key is therefore always available on the event. Each event carries the source model and attribute:
 
-You can now use convenient Blueprint macros in migrations:
+- `AttachmentCreated` and `AttachmentDeleted` receive `($attachment, $modelClass, $modelId, $attribute)`.
+- `AttachmentUpdated` also receives the replaced file: `($attachment, $oldAttachment, $modelClass, $modelId, $attribute)`.
 
-```php
-// Old way
-$table->json('avatar')->nullable();
+If your listeners read attachment properties directly (`$event->attachment->name`), switch to the accessor methods (`$event->attachment->path()`). See [Events](docs/events.md).
 
-// New way (recommended)
-$table->attachment('avatar');
-$table->attachments('photos');
-```
+### Soft Deletes Keep Their Files
 
-#### Model Trait
+File cleanup now skips soft deletes. A model using `SoftDeletes` that is soft-deleted keeps its files and fires no `AttachmentDeleted` event, so the record and its attachments can still be restored.
 
-The new `HasAttachments` trait provides convenient methods:
-
-```php
-use NiftyCo\Attachments\Concerns\HasAttachments;
-
-class User extends Model
-{
-    use HasAttachments;
-    
-    // Now you can use:
-    // $user->attachFile('avatar', $file);
-    // $user->hasAttachments();
-    // etc.
-}
-```
-
-#### Collection Operations
-
-New bulk operations on `Attachments` collections:
-
-```php
-$post->images->delete();
-$post->images->move('s3', 'archived');
-$post->images->copy('backup', 'backups');
-$post->images->archive('images.zip');
-$post->images->totalSize();
-$post->images->ofType('image');
-```
-
-#### Testing Helpers
-
-New testing trait with assertions:
-
-```php
-use NiftyCo\Attachments\Testing\InteractsWithAttachments;
-
-class UserTest extends TestCase
-{
-    use InteractsWithAttachments;
-    
-    public function test_upload()
-    {
-        $attachment = $this->createFakeAttachment();
-        $this->assertAttachmentExists($attachment);
-    }
-}
-```
-
-#### API Resources
-
-Transform attachments for JSON responses:
-
-```php
-use NiftyCo\Attachments\Http\Resources\AttachmentResource;
-
-return new AttachmentResource($user->avatar);
-```
-
-#### Filament Integration
-
-Ready-to-use Filament components:
-
-```php
-use NiftyCo\Attachments\Filament\AttachmentField;
-use NiftyCo\Attachments\Filament\AttachmentColumn;
-
-AttachmentField::make('avatar')->images();
-AttachmentColumn::make('avatar')->circular();
-```
-
-### Breaking Changes
-
-There are no breaking changes in 1.0.0 from the pre-release versions. All existing code should continue to work.
-
-### Deprecations
-
-- `Attachments::addFromFile()` is deprecated in favor of `Attachments::attach()`. Both methods work identically, but `attach()` is the preferred method going forward.
-
-## Future Upgrades
-
-This section will be updated with upgrade instructions for future major versions.
-
-### Upgrading to 2.0.0 (Future)
-
-_This section will be populated when version 2.0.0 is released._
-
+Only a force delete, or a hard delete on a model that does not use `SoftDeletes`, purges the files and fires the event. If you were relying on a soft delete removing files, use `forceDelete()` instead. See [Automatic Cleanup](docs/cleanup.md).

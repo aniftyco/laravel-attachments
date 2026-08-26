@@ -75,6 +75,33 @@ $post->images->attach($request->file('new_image'), folder: 'posts');
 $post->save();
 ```
 
+### From Raw Contents
+
+When you have the bytes instead of uploads, use `fromContents()`. Each item needs a `content` key and may include optional `filename` and `mimeType` keys. The filename only feeds the naming strategy and extension. It is never persisted:
+
+```php
+$post->images = Attachments::fromContents([
+    ['content' => $firstBytes, 'filename' => 'chart.png'],
+    ['content' => $secondBytes, 'mimeType' => 'image/jpeg'],
+], folder: 'posts');
+$post->save();
+```
+
+### From Remote URLs
+
+Use `fromUrls()` to stream several remote files into the disk:
+
+```php
+$post->images = Attachments::fromUrls([
+    'https://example.com/a.png',
+    'https://example.com/b.png',
+], folder: 'posts');
+$post->save();
+```
+
+> **Security:** `fromUrls()` fetches whatever URLs you give it. Guarding against
+> SSRF (validating/allow-listing hosts) is your responsibility.
+
 ## Using the HasAttachments Trait
 
 ```php
@@ -96,11 +123,11 @@ class Post extends Model
 Helper methods:
 
 ```php
-// Attach multiple files
-$post->attachFiles('images', $request->file('images'), folder: 'posts');
+// Assign multiple files (the cast handles storage)
+$post->images = Attachments::fromFiles($request->file('images'), folder: 'posts');
 $post->save();
 
-// Add a single file to collection
+// Add a single file to an existing collection
 $post->addAttachment('images', $request->file('image'), folder: 'posts');
 $post->save();
 
@@ -152,7 +179,7 @@ $pdfs = $post->images->filter(fn($file) => $file->isPdf());
 $urls = $post->images->map(fn($image) => $image->url());
 
 // Get all file names
-$names = $post->images->map(fn($image) => $image->name());
+$names = $post->images->map(fn($image) => $image->path());
 ```
 
 ### Sorting Attachments
@@ -162,7 +189,7 @@ $names = $post->images->map(fn($image) => $image->name());
 $sorted = $post->images->sortBy(fn($img) => $img->size());
 
 // Sort by name
-$sorted = $post->images->sortBy(fn($img) => $img->name());
+$sorted = $post->images->sortBy(fn($img) => $img->path());
 ```
 
 ## Collection Operations
@@ -208,18 +235,11 @@ $post->images->move('s3', 'archived-posts');
 $post->save();
 ```
 
-### Copy All Attachments
+### Duplicate All Attachments
 
 ```php
-// Copy all attachments to a backup location
-$post->images->copy('backup', 'backups/posts');
-```
-
-### Archive Attachments
-
-```php
-// Create a ZIP archive of all attachments
-$post->images->archive('post-images.zip');
+// Duplicate all attachments to a backup location
+$post->images->duplicate('backup', 'backups/posts');
 ```
 
 ## Removing Attachments
@@ -227,7 +247,7 @@ $post->images->archive('post-images.zip');
 ### Remove by Name
 
 ```php
-$post->images = $post->images->filter(fn($img) => $img->name() !== 'old.jpg');
+$post->images = $post->images->filter(fn($img) => $img->path() !== 'old.jpg');
 $post->save();
 ```
 
@@ -243,7 +263,7 @@ $post->save();
 ```php
 $namesToRemove = ['photo1.jpg', 'photo2.jpg'];
 $post->images = $post->images->filter(
-    fn($img) => !in_array($img->name(), $namesToRemove)
+    fn($img) => !in_array($img->path(), $namesToRemove)
 );
 $post->save();
 ```
@@ -261,7 +281,7 @@ $last = $post->images->last();
 $second = $post->images->get(1);
 
 // Find by name
-$specific = $post->images->first(fn($img) => $img->name() === 'photo.jpg');
+$specific = $post->images->first(fn($img) => $img->path() === 'photo.jpg');
 ```
 
 ## Checking for Attachments
@@ -278,12 +298,11 @@ if ($post->images->isNotEmpty()) {
 }
 
 // Check if specific file exists
-$hasPhoto = $post->images->contains(fn($img) => $img->name() === 'photo.jpg');
+$hasPhoto = $post->images->contains(fn($img) => $img->path() === 'photo.jpg');
 ```
 
 ## Next Steps
 
-- Learn about [File Validation](validation.md)
 - Configure [Automatic Cleanup](cleanup.md)
 - Generate [URLs](urls.md)
 - Use [API Resources](api-resources.md)
