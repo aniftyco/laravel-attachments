@@ -81,37 +81,34 @@ class AttachmentField extends FileUpload
         return static::make($name)
             ->multiple(true)
             ->dehydrateStateUsing(function ($state) {
-                if (! $state) {
+                if (! is_iterable($state)) {
                     return [];
                 }
 
-                return collect($state)->map(function ($item) {
-                    if ($item instanceof Attachment) {
-                        return $item;
-                    }
+                $items = [];
 
+                foreach ($state as $item) {
                     if (\is_string($item)) {
-                        return Attachment::fromPath(
-                            $item,
-                            config('attachments.disk')
-                        );
+                        $item = Attachment::fromPath($item, config('attachments.disk'));
                     }
 
-                    return $item;
-                })->all();
+                    $items[] = $item;
+                }
+
+                return $items;
             })
             ->formatStateUsing(function ($state) {
-                if (! $state) {
+                if (! is_iterable($state)) {
                     return [];
                 }
 
-                return collect($state)->map(function ($item) {
-                    if ($item instanceof Attachment) {
-                        return $item->path();
-                    }
+                $items = [];
 
-                    return $item;
-                })->all();
+                foreach ($state as $item) {
+                    $items[] = $item instanceof Attachment ? $item->path() : $item;
+                }
+
+                return $items;
             });
     }
 

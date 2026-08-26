@@ -2,83 +2,38 @@
 
 namespace NiftyCo\Attachments\Filament;
 
-use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
 use NiftyCo\Attachments\Attachment;
 
-class AttachmentColumn extends ImageColumn
+class AttachmentColumn extends TextColumn
 {
     /**
-     * Configure the column to display an attachment.
+     * Configure the column to display an attachment as a downloadable,
+     * type-iconed label showing its human-readable size.
      */
     public static function make(?string $name = null): static
     {
         return parent::make($name)
-            ->getStateUsing(function ($record) use ($name) {
-                $attachment = data_get($record, $name);
-
-                if ($attachment instanceof Attachment) {
-                    return $attachment->url();
-                }
-
-                return null;
-            })
-            ->defaultImageUrl(function ($record) use ($name) {
-                $attachment = data_get($record, $name);
-
-                if ($attachment instanceof Attachment && ! $attachment->isImage()) {
-                    // Return a default icon for non-image files
-                    return null;
-                }
-
-                return null;
-            });
+            ->formatStateUsing(fn ($state): ?string => $state instanceof Attachment ? $state->readableSize() : null)
+            ->icon(fn ($state): ?string => $state instanceof Attachment ? static::iconFor($state) : null)
+            ->url(
+                fn ($state): ?string => $state instanceof Attachment ? $state->url() : null,
+                shouldOpenInNewTab: true
+            );
     }
 
     /**
-     * Display the attachment name instead of image.
+     * Map an attachment to a Heroicon name based on its type.
      */
-    public function asText(): static
+    protected static function iconFor(Attachment $attachment): string
     {
-        return $this->formatStateUsing(function ($state, $record) {
-            $attachment = data_get($record, $this->getName());
-
-            if ($attachment instanceof Attachment) {
-                return $attachment->path();
-            }
-
-            return null;
-        });
-    }
-
-    /**
-     * Display the attachment size.
-     */
-    public function asSize(): static
-    {
-        return $this->formatStateUsing(function ($state, $record) {
-            $attachment = data_get($record, $this->getName());
-
-            if ($attachment instanceof Attachment) {
-                return $attachment->readableSize();
-            }
-
-            return null;
-        });
-    }
-
-    /**
-     * Make the attachment downloadable.
-     */
-    public function downloadable(): static
-    {
-        return $this->url(function ($record) {
-            $attachment = data_get($record, $this->getName());
-
-            if ($attachment instanceof Attachment) {
-                return $attachment->url();
-            }
-
-            return null;
-        }, shouldOpenInNewTab: true);
+        return match (true) {
+            $attachment->isImage() => 'heroicon-o-photo',
+            $attachment->isPdf() => 'heroicon-o-document-text',
+            $attachment->isVideo() => 'heroicon-o-video-camera',
+            $attachment->isAudio() => 'heroicon-o-musical-note',
+            $attachment->isDocument() => 'heroicon-o-document',
+            default => 'heroicon-o-paper-clip',
+        };
     }
 }
