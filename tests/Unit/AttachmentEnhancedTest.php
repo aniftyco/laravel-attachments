@@ -42,6 +42,20 @@ it('formats bytes correctly', function () {
     }
 });
 
+it('renders fixed decimals when a precision is given', function () {
+    $attachment = new Attachment(
+        disk: 'public',
+        name: 'test.jpg',
+        size: 2 * 1024 * 1024,
+        extname: 'jpg',
+        mimeType: 'image/jpeg'
+    );
+
+    expect($attachment->readableSize())->toBe('2 MB')
+        ->and($attachment->readableSize(2))->toBe('2.00 MB')
+        ->and($attachment->readableSize(0))->toBe('2 MB');
+});
+
 it('handles null size gracefully', function () {
     $attachment = new Attachment(
         disk: 'public',

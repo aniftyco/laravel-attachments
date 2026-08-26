@@ -4,7 +4,6 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use NiftyCo\Attachments\Attachment;
 use NiftyCo\Attachments\Attachments;
-use NiftyCo\Attachments\Exceptions\StorageException;
 
 beforeEach(function () {
     Storage::fake('public');
@@ -70,7 +69,7 @@ it('can move all attachments to different disk', function () {
     }
 });
 
-it('can copy all attachments to different disk', function () {
+it('can duplicate all attachments to different disk', function () {
     $file1 = UploadedFile::fake()->create('doc1.pdf');
     $file2 = UploadedFile::fake()->create('doc2.pdf');
 
@@ -81,50 +80,23 @@ it('can copy all attachments to different disk', function () {
 
     $originalPaths = $attachments->map(fn ($a) => $a->path())->toArray();
 
-    // Copy to backup
-    $copied = $attachments->copy('backup', 'backups');
+    // Duplicate to backup
+    $duplicated = $attachments->duplicate('backup', 'backups');
 
-    expect($copied)->toBeInstanceOf(Attachments::class)
-        ->and($copied)->toHaveCount(2);
+    expect($duplicated)->toBeInstanceOf(Attachments::class)
+        ->and($duplicated)->toHaveCount(2);
 
     // Original files should still exist
     foreach ($originalPaths as $path) {
         expect(Storage::disk('public')->exists($path))->toBeTrue();
     }
 
-    // Copied files should exist on backup disk
-    foreach ($copied as $attachment) {
+    // Duplicated files should exist on backup disk
+    foreach ($duplicated as $attachment) {
         expect($attachment->disk())->toBe('backup')
             ->and(Storage::disk('backup')->exists($attachment->path()))->toBeTrue();
     }
 });
-
-it('can create zip archive from attachments', function () {
-    $file1 = UploadedFile::fake()->create('doc1.pdf', 10);
-    $file2 = UploadedFile::fake()->create('doc2.pdf', 20);
-    $file3 = UploadedFile::fake()->create('doc3.pdf', 30);
-
-    $attachments = new Attachments([
-        Attachment::fromFile($file1, 'public', 'files'),
-        Attachment::fromFile($file2, 'public', 'files'),
-        Attachment::fromFile($file3, 'public', 'files'),
-    ]);
-
-    $archive = $attachments->archive('documents.zip', 'public', 'archives');
-
-    expect($archive)->toBeInstanceOf(Attachment::class)
-        ->and($archive->disk())->toBe('public')
-        ->and($archive->extname())->toBe('zip')
-        ->and($archive->mimeType())->toBe('application/zip')
-        ->and(Storage::disk('public')->exists($archive->path()))->toBeTrue()
-        ->and($archive->size())->toBeGreaterThan(0);
-});
-
-it('throws exception when creating archive from empty collection', function () {
-    $attachments = new Attachments([]);
-
-    $attachments->archive('empty.zip');
-})->throws(StorageException::class, 'Cannot create archive from empty collection');
 
 it('can calculate total size of attachments', function () {
     $file1 = UploadedFile::fake()->create('file1.txt', 100); // 100KB
@@ -155,6 +127,18 @@ it('can get human-readable total size', function () {
     $readableSize = $attachments->totalReadableSize();
 
     expect($readableSize)->toContain('MB');
+});
+
+it('renders total size with fixed decimals when a precision is given', function () {
+    $attachments = new Attachments([
+        Attachment::fromFile(UploadedFile::fake()->create('file1.txt', 1024), 'public', 'files'), // ~1 MB
+        Attachment::fromFile(UploadedFile::fake()->create('file2.txt', 2048), 'public', 'files'), // ~2 MB
+    ]);
+
+    // Default output is unchanged (trimmed); precision forces fixed decimals.
+    expect($attachments->totalReadableSize())->toContain('MB')
+        ->and($attachments->totalReadableSize())->not->toContain('.00')
+        ->and($attachments->totalReadableSize(2))->toContain('.00 MB');
 });
 
 it('can filter attachments by type - images', function () {
@@ -204,28 +188,4 @@ it('returns empty collection when filtering by unknown type', function () {
     $filtered = $attachments->ofType('unknown');
 
     expect($filtered)->toBeEmpty();
-});
-
-it('preserves metadata when moving attachments', function () {
-    $file = UploadedFile::fake()->image('photo.jpg');
-    $attachment = Attachment::fromFile($file, 'public', 'photos')
-        ->withMetadata(['author' => 'John', 'tags' => ['nature']]);
-
-    $attachments = new Attachments([$attachment]);
-    $moved = $attachments->move('s3', 'archived');
-
-    expect($moved->first()->getMeta('author'))->toBe('John')
-        ->and($moved->first()->getMeta('tags'))->toBe(['nature']);
-});
-
-it('preserves metadata when copying attachments', function () {
-    $file = UploadedFile::fake()->image('photo.jpg');
-    $attachment = Attachment::fromFile($file, 'public', 'photos')
-        ->withMetadata(['author' => 'Jane', 'category' => 'landscape']);
-
-    $attachments = new Attachments([$attachment]);
-    $copied = $attachments->copy('backup', 'backups');
-
-    expect($copied->first()->getMeta('author'))->toBe('Jane')
-        ->and($copied->first()->getMeta('category'))->toBe('landscape');
 });

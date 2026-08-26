@@ -22,18 +22,14 @@ class AttachmentResource extends JsonResource
         $attachment = $this->resource;
 
         return [
-            'name' => $attachment->name(),
             'path' => $attachment->path(),
             'url' => $attachment->url(),
             'size' => $attachment->size(),
             'readable_size' => $attachment->readableSize(),
-            'mime' => $attachment->mimeType(),
-            'extension' => $attachment->extname(),
+            'mime' => $attachment->mime(),
+            'extension' => $attachment->extension(),
             'disk' => $attachment->disk(),
             'folder' => $attachment->folder(),
-            'metadata' => $attachment->metadata(),
-            'created_at' => $attachment->getMeta('created_at')?->toISOString(),
-            'updated_at' => $attachment->getMeta('updated_at')?->toISOString(),
         ];
     }
 

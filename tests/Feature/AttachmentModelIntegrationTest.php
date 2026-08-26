@@ -40,9 +40,9 @@ it('can save and retrieve single attachment on model', function () {
     $retrieved = $model->fresh();
 
     expect($retrieved->cover)->toBeInstanceOf(Attachment::class)
-        ->and($retrieved->cover->name())->toBe($attachment->name())
+        ->and($retrieved->cover->path())->toBe($attachment->path())
         ->and($retrieved->cover->disk())->toBe('public')
-        ->and($retrieved->cover->extname())->toBe('jpg');
+        ->and($retrieved->cover->extension())->toBe('jpg');
 });
 
 it('can save and retrieve multiple attachments on model', function () {
@@ -62,8 +62,8 @@ it('can save and retrieve multiple attachments on model', function () {
 
     expect($retrieved->files)->toBeInstanceOf(Attachments::class)
         ->and($retrieved->files)->toHaveCount(2)
-        ->and($retrieved->files->first()->name())->toContain('.pdf')
-        ->and($retrieved->files->last()->name())->toContain('.pdf');
+        ->and($retrieved->files->first()->path())->toContain('.pdf')
+        ->and($retrieved->files->last()->path())->toContain('.pdf');
 });
 
 it('replaces old attachment when updating', function () {

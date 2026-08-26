@@ -58,27 +58,17 @@ return [
     | File Naming Strategy
     |--------------------------------------------------------------------------
     |
-    | Configure how uploaded files should be named. Options:
-    | - 'hash' (default): Use Laravel's default hash-based naming
-    | - 'original': Keep the original filename (sanitized)
-    | - 'uuid': Generate a UUID for the filename
+    | Configure how uploaded files should be named. Accepts one of the built-in
+    | strategies — 'random', 'uuid', or 'original' — or the fully-qualified class
+    | name of a class implementing NiftyCo\Attachments\Naming\NamingStrategy.
+    |
+    | - 'random' (default): Random basename + original extension
+    | - 'uuid': UUID basename + original extension
+    | - 'original': Sanitized original filename (unique on collision)
     |
     */
 
-    'naming_strategy' => env('ATTACHMENTS_NAMING_STRATEGY', 'hash'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Preserve Original Filename
-    |--------------------------------------------------------------------------
-    |
-    | When true, the original filename will be stored in metadata even when
-    | using hash or UUID naming strategies. This allows you to retrieve the
-    | original filename later.
-    |
-    */
-
-    'preserve_original_name' => env('ATTACHMENTS_PRESERVE_ORIGINAL_NAME', true),
+    'naming_strategy' => env('ATTACHMENTS_NAMING_STRATEGY', 'random'),
 
     /*
     |--------------------------------------------------------------------------
@@ -92,44 +82,4 @@ return [
     */
 
     'temporary_url_expiration' => env('ATTACHMENTS_TEMPORARY_URL_EXPIRATION', 60),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Events
-    |--------------------------------------------------------------------------
-    |
-    | Enable or disable events for attachment operations. When enabled,
-    | events will be dispatched for file uploads, deletions, etc.
-    |
-    */
-
-    'events' => [
-        'enabled' => env('ATTACHMENTS_EVENTS_ENABLED', true),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Metadata
-    |--------------------------------------------------------------------------
-    |
-    | Configure metadata storage for attachments. Metadata allows you to
-    | store additional information about files.
-    |
-    */
-
-    'metadata' => [
-        /*
-        | Enable metadata support
-        */
-        'enabled' => env('ATTACHMENTS_METADATA_ENABLED', true),
-
-        /*
-        | Automatically capture metadata fields from uploaded files
-        */
-        'auto_capture' => [
-            'original_name' => true,
-            'uploaded_at' => true,
-            'uploaded_by' => false, // Requires authentication
-        ],
-    ],
 ];

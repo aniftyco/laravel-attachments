@@ -27,7 +27,7 @@ it('can store file on s3 disk', function () {
 
     expect($attachment->disk())->toBe('s3')
         ->and(Storage::disk('s3')->exists($attachment->path()))->toBeTrue()
-        ->and($attachment->extname())->toBe('pdf');
+        ->and($attachment->extension())->toBe('pdf');
 });
 
 it('can store file on local disk', function () {
@@ -52,7 +52,7 @@ it('can move attachment between disks', function () {
     expect($moved->disk())->toBe('s3')
         ->and(Storage::disk('public')->exists($originalPath))->toBeFalse()
         ->and(Storage::disk('s3')->exists($moved->path()))->toBeTrue()
-        ->and(basename($moved->name()))->toBe(basename($attachment->name()));
+        ->and(basename($moved->path()))->toBe(basename($attachment->path()));
 });
 
 it('can duplicate attachment to different disk', function () {
@@ -63,7 +63,7 @@ it('can duplicate attachment to different disk', function () {
 
     expect($duplicate)->toBeInstanceOf(Attachment::class)
         ->and($duplicate->disk())->toBe('s3')
-        ->and($duplicate->name())->not->toBe($attachment->name())
+        ->and($duplicate->path())->not->toBe($attachment->path())
         ->and(Storage::disk('public')->exists($attachment->path()))->toBeTrue()
         ->and(Storage::disk('s3')->exists($duplicate->path()))->toBeTrue();
 });
@@ -111,7 +111,7 @@ it('can get file url from storage', function () {
     $url = $attachment->url();
 
     expect($url)->toBeString()
-        ->and($url)->toContain($attachment->name());
+        ->and($url)->toContain($attachment->path());
 });
 
 it('can get temporary url for private files', function () {
@@ -122,18 +122,6 @@ it('can get temporary url for private files', function () {
 
     expect($tempUrl)->toBeString()
         ->and($tempUrl)->not->toBeEmpty();
-});
-
-it('preserves file metadata across disk operations', function () {
-    $file = UploadedFile::fake()->image('metadata.jpg', 200, 200);
-
-    $attachment = Attachment::fromFile($file, 'public', 'images')
-        ->withMetadata(['author' => 'John Doe', 'tags' => ['photo', 'test']]);
-
-    $moved = $attachment->move('s3', 'archived');
-
-    expect($moved->getMeta('author'))->toBe('John Doe')
-        ->and($moved->getMeta('tags'))->toBe(['photo', 'test']);
 });
 
 it('handles large files correctly', function () {
@@ -154,7 +142,7 @@ it('can rename attachment file', function () {
 
     $renamed = $attachment->rename('new-name');
 
-    expect(basename($renamed->name()))->toBe('new-name.jpg')
+    expect(basename($renamed->path()))->toBe('new-name.jpg')
         ->and(Storage::disk('public')->exists($oldPath))->toBeFalse()
         ->and(Storage::disk('public')->exists($renamed->path()))->toBeTrue();
 });

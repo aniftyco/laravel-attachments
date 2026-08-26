@@ -16,7 +16,7 @@ it('can create an attachment from an uploaded file', function () {
     expect($attachment)->toBeInstanceOf(Attachment::class);
     expect($attachment->disk())->toBe('public');
     expect($attachment->extension())->toBe('jpg');
-    expect($attachment->mimeType())->toBe('image/jpeg');
+    expect($attachment->mime())->toBe('image/jpeg');
     expect($attachment->size())->toBeGreaterThan(0);
 });
 
@@ -84,7 +84,7 @@ it('provides access to file properties', function () {
 
     expect($attachment->disk())->toBe('public');
     expect($attachment->extension())->toBe('pdf');
-    expect($attachment->mimeType())->toBe('application/pdf');
+    expect($attachment->mime())->toBe('application/pdf');
     expect($attachment->size())->toBeGreaterThan(0);
     expect($attachment->path())->toContain('attachments');
 });

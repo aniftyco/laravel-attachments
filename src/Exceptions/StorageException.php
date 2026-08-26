@@ -4,11 +4,6 @@ namespace NiftyCo\Attachments\Exceptions;
 
 class StorageException extends AttachmentException
 {
-    public static function diskNotFound(string $disk): self
-    {
-        return new self("Storage disk [{$disk}] not found.");
-    }
-
     public static function fileNotFound(string $path): self
     {
         return new self("File not found at path [{$path}].");
@@ -25,7 +20,7 @@ class StorageException extends AttachmentException
         return new self($message);
     }
 
-    public static function uploadFailed(string $reason = ''): self
+    public static function uploadFailed(string $reason = '', ?\Throwable $previous = null): self
     {
         $message = 'Failed to upload file';
 
@@ -33,6 +28,6 @@ class StorageException extends AttachmentException
             $message .= ": {$reason}";
         }
 
-        return new self($message);
+        return new self($message, 0, $previous);
     }
 }

@@ -9,6 +9,7 @@ use NiftyCo\Attachments\Attachment;
 use NiftyCo\Attachments\Attachments;
 use NiftyCo\Attachments\Casts\AsAttachment;
 use NiftyCo\Attachments\Casts\AsAttachments;
+use NiftyCo\Attachments\Concerns\HasAttachmentCleanup;
 
 beforeEach(function () {
     Storage::fake('public');
@@ -31,6 +32,8 @@ it('deletes old attachment when replaced with new one', function () {
 
     $model = new class extends Model
     {
+        use HasAttachmentCleanup;
+
         protected $table = 'test_models';
 
         protected $guarded = [];
@@ -72,6 +75,8 @@ it('deletes old attachments when replaced with new collection', function () {
 
     $model = new class extends Model
     {
+        use HasAttachmentCleanup;
+
         protected $table = 'test_models';
 
         protected $guarded = [];
@@ -123,6 +128,8 @@ it('does not delete old attachment when delete_on_replace is disabled', function
 
     $model = new class extends Model
     {
+        use HasAttachmentCleanup;
+
         protected $table = 'test_models';
 
         protected $guarded = [];
@@ -155,11 +162,52 @@ it('does not delete old attachment when delete_on_replace is disabled', function
     expect(Storage::disk('public')->exists($attachment2->path()))->toBeTrue();
 });
 
+it('deletes the old file only after save, not at assignment', function () {
+    config(['attachments.delete_on_replace' => true]);
+
+    $model = new class extends Model
+    {
+        use HasAttachmentCleanup;
+
+        protected $table = 'test_models';
+
+        protected $guarded = [];
+
+        protected function casts(): array
+        {
+            return [
+                'avatar' => AsAttachment::class,
+            ];
+        }
+    };
+
+    $old = Attachment::fromFile(UploadedFile::fake()->image('old.jpg'), 'public');
+    $model->avatar = $old;
+    $model->save();
+    $oldPath = $old->path();
+
+    // Assign a replacement but DON'T save yet.
+    $new = Attachment::fromFile(UploadedFile::fake()->image('new.jpg'), 'public');
+    $model->avatar = $new;
+
+    // The old file must survive assignment — a rollback here would leave a
+    // valid DB row still pointing at it.
+    expect(Storage::disk('public')->exists($oldPath))->toBeTrue();
+
+    // Only persisting the replacement purges the old file.
+    $model->save();
+
+    expect(Storage::disk('public')->exists($oldPath))->toBeFalse()
+        ->and(Storage::disk('public')->exists($new->path()))->toBeTrue();
+});
+
 it('does not delete new attachment when replacing via request pattern', function () {
     config(['attachments.delete_on_replace' => true]);
 
     $model = new class extends Model
     {
+        use HasAttachmentCleanup;
+
         protected $table = 'test_models';
 
         protected $guarded = [];

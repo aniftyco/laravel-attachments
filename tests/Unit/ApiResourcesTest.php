@@ -13,14 +13,12 @@ beforeEach(function () {
 
 it('can transform attachment to resource', function () {
     $file = UploadedFile::fake()->image('photo.jpg', 100, 100);
-    $attachment = Attachment::fromFile($file, 'public', 'photos')
-        ->setMeta('author', 'John Doe');
+    $attachment = Attachment::fromFile($file, 'public', 'photos');
 
     $resource = new AttachmentResource($attachment);
     $array = $resource->toArray(request());
 
     expect($array)->toHaveKeys([
-        'name',
         'path',
         'url',
         'size',
@@ -29,16 +27,11 @@ it('can transform attachment to resource', function () {
         'extension',
         'disk',
         'folder',
-        'metadata',
-        'created_at',
-        'updated_at',
     ])
-        ->and($array['name'])->toContain('.jpg')
+        ->and($array['path'])->toContain('.jpg')
         ->and($array['disk'])->toBe('public')
         ->and($array['folder'])->toBe('photos')
-        ->and($array['extension'])->toBe('jpg')
-        ->and($array['metadata'])->toHaveKey('author')
-        ->and($array['metadata']['author'])->toBe('John Doe');
+        ->and($array['extension'])->toBe('jpg');
 });
 
 it('includes file type in resource response', function () {
@@ -111,29 +104,4 @@ it('resource includes url', function () {
     expect($array['url'])->toBeString()
         ->and($array['url'])->toContain('/storage/photos/')
         ->and($array['url'])->toContain('.jpg');
-});
-
-it('resource handles null timestamps', function () {
-    $file = UploadedFile::fake()->image('photo.jpg');
-    $attachment = Attachment::fromFile($file, 'public', 'photos');
-
-    // Timestamps are null by default
-    $resource = new AttachmentResource($attachment);
-    $array = $resource->toArray(request());
-
-    expect($array['created_at'])->toBeNull()
-        ->and($array['updated_at'])->toBeNull();
-});
-
-it('resource formats timestamps when present', function () {
-    $file = UploadedFile::fake()->image('photo.jpg');
-    $attachment = Attachment::fromFile($file, 'public', 'photos');
-    $attachment = $attachment->setMeta('created_at', now());
-    $attachment = $attachment->setMeta('updated_at', now());
-
-    $resource = new AttachmentResource($attachment);
-    $array = $resource->toArray(request());
-
-    expect($array['created_at'])->toBeString()
-        ->and($array['updated_at'])->toBeString();
 });

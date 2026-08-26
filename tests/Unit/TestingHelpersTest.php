@@ -63,19 +63,11 @@ it('can assert attachment is pdf', function () {
     $this->assertAttachmentIsPdf($attachment);
 });
 
-it('can assert attachment has metadata', function () {
-    $file = UploadedFile::fake()->image('photo.jpg');
-    $attachment = Attachment::fromFile($file, 'public', 'photos')
-        ->setMeta('author', 'John Doe');
-
-    $this->assertAttachmentHasMeta($attachment, 'author', 'John Doe');
-});
-
 it('can create fake attachment', function () {
     $attachment = $this->createFakeAttachment('test.jpg', 'public', 'test', 100);
 
     expect($attachment)->toBeInstanceOf(Attachment::class)
-        ->and($attachment->extname())->toBe('jpg')
+        ->and($attachment->extension())->toBe('jpg')
         ->and($attachment->disk())->toBe('public');
 
     $this->assertAttachmentExists($attachment);
@@ -95,8 +87,8 @@ it('can create multiple fake attachments', function () {
 it('fake attachments have sequential names', function () {
     $attachments = $this->createFakeAttachments(3);
 
-    expect($attachments[0]->extname())->toBe('jpg')
-        ->and($attachments[1]->extname())->toBe('jpg')
-        ->and($attachments[2]->extname())->toBe('jpg')
+    expect($attachments[0]->extension())->toBe('jpg')
+        ->and($attachments[1]->extension())->toBe('jpg')
+        ->and($attachments[2]->extension())->toBe('jpg')
         ->and($attachments)->toHaveCount(3);
 });

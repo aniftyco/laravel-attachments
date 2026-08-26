@@ -69,7 +69,7 @@ trait InteractsWithAttachments
     {
         $this->assertEquals(
             $expectedMimeType,
-            $attachment->mimeType(),
+            $attachment->mime(),
             "Failed asserting that attachment [{$attachment->path()}] has MIME type [{$expectedMimeType}]."
         );
     }
@@ -94,25 +94,6 @@ trait InteractsWithAttachments
             $attachment->isPdf(),
             "Failed asserting that attachment [{$attachment->path()}] is a PDF."
         );
-    }
-
-    /**
-     * Assert that an attachment has metadata.
-     */
-    public function assertAttachmentHasMeta(Attachment $attachment, string $key, mixed $expectedValue = null): void
-    {
-        $this->assertTrue(
-            $attachment->hasMeta($key),
-            "Failed asserting that attachment [{$attachment->path()}] has metadata key [{$key}]."
-        );
-
-        if ($expectedValue !== null) {
-            $this->assertEquals(
-                $expectedValue,
-                $attachment->getMeta($key),
-                "Failed asserting that attachment metadata [{$key}] equals expected value."
-            );
-        }
     }
 
     /**

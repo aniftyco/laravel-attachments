@@ -3,6 +3,8 @@
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use NiftyCo\Attachments\Attachment;
+use NiftyCo\Attachments\Attachments;
 use NiftyCo\Attachments\Casts\AsAttachment;
 use NiftyCo\Attachments\Casts\AsAttachments;
 use NiftyCo\Attachments\Concerns\HasAttachments;
@@ -26,38 +28,12 @@ beforeEach(function () {
     Storage::fake('public');
 });
 
-it('can attach a file to an attribute', function () {
-    $model = new TestModelWithAttachments;
-    $file = UploadedFile::fake()->image('avatar.jpg');
-
-    $model->attachFile('avatar', $file, 'public', 'avatars');
-
-    expect($model->avatar)->not->toBeNull()
-        ->and($model->avatar->extname())->toBe('jpg')
-        ->and($model->avatar->disk())->toBe('public');
-});
-
-it('can attach multiple files to an attribute', function () {
-    $model = new TestModelWithAttachments;
-    $files = [
-        UploadedFile::fake()->image('photo1.jpg'),
-        UploadedFile::fake()->image('photo2.jpg'),
-        UploadedFile::fake()->image('photo3.jpg'),
-    ];
-
-    $model->attachFiles('photos', $files, 'public', 'photos');
-
-    expect($model->photos)->toHaveCount(3);
-});
-
 it('can add attachment to existing collection', function () {
     $model = new TestModelWithAttachments;
-    $files = [
+    $model->photos = Attachments::fromFiles([
         UploadedFile::fake()->image('photo1.jpg'),
         UploadedFile::fake()->image('photo2.jpg'),
-    ];
-
-    $model->attachFiles('photos', $files, 'public', 'photos');
+    ], 'public', 'photos');
 
     expect($model->photos)->toHaveCount(2);
 
@@ -68,18 +44,16 @@ it('can add attachment to existing collection', function () {
 
 it('can remove attachment by name', function () {
     $model = new TestModelWithAttachments;
-    $files = [
+    $model->photos = Attachments::fromFiles([
         UploadedFile::fake()->image('photo1.jpg'),
         UploadedFile::fake()->image('photo2.jpg'),
         UploadedFile::fake()->image('photo3.jpg'),
-    ];
-
-    $model->attachFiles('photos', $files, 'public', 'photos');
+    ], 'public', 'photos');
 
     expect($model->photos)->toHaveCount(3);
 
     // Get the actual stored name of the second photo
-    $secondPhotoName = $model->photos->get(1)->name();
+    $secondPhotoName = $model->photos->get(1)->path();
     $model->removeAttachment('photos', $secondPhotoName);
 
     expect($model->photos)->toHaveCount(2)
@@ -88,9 +62,7 @@ it('can remove attachment by name', function () {
 
 it('can clear all attachments without deleting files', function () {
     $model = new TestModelWithAttachments;
-    $file = UploadedFile::fake()->image('avatar.jpg');
-
-    $model->attachFile('avatar', $file, 'public', 'avatars');
+    $model->avatar = Attachment::fromFile(UploadedFile::fake()->image('avatar.jpg'), 'public', 'avatars');
     $path = $model->avatar->path();
 
     expect($model->avatar)->not->toBeNull();
@@ -103,9 +75,7 @@ it('can clear all attachments without deleting files', function () {
 
 it('can clear all attachments and delete files', function () {
     $model = new TestModelWithAttachments;
-    $file = UploadedFile::fake()->image('avatar.jpg');
-
-    $model->attachFile('avatar', $file, 'public', 'avatars');
+    $model->avatar = Attachment::fromFile(UploadedFile::fake()->image('avatar.jpg'), 'public', 'avatars');
     $path = $model->avatar->path();
 
     expect($model->avatar)->not->toBeNull();
@@ -130,7 +100,7 @@ it('can check if model has attachments', function () {
 
     expect($model->hasAttachments())->toBeFalse();
 
-    $model->attachFile('avatar', UploadedFile::fake()->image('avatar.jpg'), 'public', 'avatars');
+    $model->avatar = Attachment::fromFile(UploadedFile::fake()->image('avatar.jpg'), 'public', 'avatars');
 
     expect($model->hasAttachments())->toBeTrue();
 });
@@ -138,8 +108,8 @@ it('can check if model has attachments', function () {
 it('can calculate total attachments size', function () {
     $model = new TestModelWithAttachments;
 
-    $model->attachFile('avatar', UploadedFile::fake()->create('avatar.jpg', 100), 'public', 'avatars');
-    $model->attachFiles('photos', [
+    $model->avatar = Attachment::fromFile(UploadedFile::fake()->create('avatar.jpg', 100), 'public', 'avatars');
+    $model->photos = Attachments::fromFiles([
         UploadedFile::fake()->create('photo1.jpg', 200),
         UploadedFile::fake()->create('photo2.jpg', 300),
     ], 'public', 'photos');

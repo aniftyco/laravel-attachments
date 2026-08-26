@@ -5,6 +5,8 @@ namespace NiftyCo\Attachments\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
+use function NiftyCo\Attachments\format_bytes;
+
 class AttachmentCollection extends ResourceCollection
 {
     /**
@@ -33,22 +35,8 @@ class AttachmentCollection extends ResourceCollection
             'meta' => [
                 'total' => $this->collection->count(),
                 'total_size' => $totalSize,
-                'total_readable_size' => $this->formatBytes($totalSize),
+                'total_readable_size' => format_bytes($totalSize),
             ],
         ];
-    }
-
-    /**
-     * Format bytes to human-readable size.
-     */
-    protected function formatBytes(int $bytes, int $precision = 2): string
-    {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-
-        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
-            $bytes /= 1024;
-        }
-
-        return round($bytes, $precision).' '.$units[$i];
     }
 }

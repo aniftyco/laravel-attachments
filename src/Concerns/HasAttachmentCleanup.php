@@ -15,7 +15,11 @@ trait HasAttachmentCleanup
     public static function bootHasAttachmentCleanup(): void
     {
         // Laravel 13 forbids `new static` during boot, which `observe()` does.
-        // Register the event directly instead.
+        // Register the events directly instead.
+        static::saved(function ($model): void {
+            (new AttachmentObserver)->saved($model);
+        });
+
         static::deleting(function ($model): void {
             (new AttachmentObserver)->deleting($model);
         });

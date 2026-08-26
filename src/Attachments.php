@@ -7,17 +7,16 @@ use Illuminate\Support\Collection;
 use NiftyCo\Attachments\Exceptions\StorageException;
 
 /**
- * @template TKey of array-key
- * @template TAttachment of \NiftyCo\Attachments\Attachment
+ * @extends Collection<int, Attachment>
  *
- * @extends Collection<TKey, TAttachment>
+ * @phpstan-consistent-constructor
  */
 class Attachments extends Collection
 {
     /**
      * Create a collection of attachments from multiple uploaded files.
      *
-     * @param  array<UploadedFile>  $files
+     * @param  array<int, UploadedFile>  $files
      *
      * @throws StorageException
      */
@@ -30,6 +29,64 @@ class Attachments extends Collection
 
         foreach ($files as $file) {
             $collection->attach($file, $disk, $folder);
+        }
+
+        return $collection;
+    }
+
+    /**
+     * Create a collection of attachments from multiple raw contents.
+     *
+     * Each item is an associative array with a required `content` key and
+     * optional `filename` and `mimeType` keys.
+     *
+     * @param  array<int, array{content?: string, filename?: string|null, mimeType?: string|null}>  $items
+     *
+     * @throws StorageException
+     */
+    public static function fromContents(
+        array $items,
+        ?string $disk = null,
+        ?string $folder = null
+    ): static {
+        $collection = new static;
+
+        foreach ($items as $item) {
+            if (! array_key_exists('content', $item)) {
+                throw new StorageException('Each item passed to fromContents() must include a "content" key.');
+            }
+
+            $collection->add(Attachment::fromContent(
+                $item['content'],
+                $item['filename'] ?? null,
+                $disk,
+                $folder,
+                $item['mimeType'] ?? null,
+            ));
+        }
+
+        return $collection;
+    }
+
+    /**
+     * Create a collection of attachments by streaming multiple remote URLs.
+     *
+     * See Attachment::fromUrl() — guarding against SSRF is the caller's
+     * responsibility.
+     *
+     * @param  array<int, string>  $urls
+     *
+     * @throws StorageException
+     */
+    public static function fromUrls(
+        array $urls,
+        ?string $disk = null,
+        ?string $folder = null
+    ): static {
+        $collection = new static;
+
+        foreach ($urls as $url) {
+            $collection->add(Attachment::fromUrl($url, $disk, $folder));
         }
 
         return $collection;
@@ -71,13 +128,13 @@ class Attachments extends Collection
     /**
      * Move all attachments to a different disk and/or folder.
      *
-     * @param  string  $disk  Target disk
+     * @param  string|null  $disk  Target disk (null to keep each attachment's disk)
      * @param  string|null  $folder  Target folder (optional)
      * @return static New collection with moved attachments
      *
      * @throws StorageException
      */
-    public function move(string $disk, ?string $folder = null): static
+    public function move(?string $disk = null, ?string $folder = null): static
     {
         $moved = new static;
 
@@ -89,81 +146,23 @@ class Attachments extends Collection
     }
 
     /**
-     * Copy all attachments to a different disk and/or folder.
+     * Duplicate all attachments to a different disk and/or folder.
      *
-     * @param  string  $disk  Target disk
+     * @param  string|null  $disk  Target disk (null to keep each attachment's disk)
      * @param  string|null  $folder  Target folder (optional)
-     * @return static New collection with copied attachments
+     * @return static New collection with duplicated attachments
      *
      * @throws StorageException
      */
-    public function copy(string $disk, ?string $folder = null): static
+    public function duplicate(?string $disk = null, ?string $folder = null): static
     {
-        $copied = new static;
+        $duplicated = new static;
 
         foreach ($this->items as $attachment) {
-            $copied->add($attachment->duplicate($disk, $folder));
+            $duplicated->add($attachment->duplicate($disk, $folder));
         }
 
-        return $copied;
-    }
-
-    /**
-     * Create a zip archive of all attachments.
-     *
-     * @param  string  $archiveName  Name of the archive file
-     * @param  string|null  $disk  Disk to store the archive (defaults to first attachment's disk)
-     * @param  string|null  $folder  Folder to store the archive
-     * @return Attachment The created archive attachment
-     *
-     * @throws StorageException
-     */
-    public function archive(string $archiveName, ?string $disk = null, ?string $folder = null): Attachment
-    {
-        if ($this->isEmpty()) {
-            throw new StorageException('Cannot create archive from empty collection');
-        }
-
-        // Use first attachment's disk if not specified
-        $disk = $disk ?? $this->first()->disk();
-        $folder = $folder ?? 'archives';
-
-        // Create temporary zip file
-        $tempZip = tempnam(sys_get_temp_dir(), 'attachments_');
-        $zip = new \ZipArchive;
-
-        if ($zip->open($tempZip, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
-            throw new StorageException('Failed to create zip archive');
-        }
-
-        // Add each attachment to the zip
-        foreach ($this->items as $attachment) {
-            $contents = $attachment->contents();
-            $name = $attachment->path();
-            if ($name === null) {
-                continue;
-            }
-            $zip->addFromString($name, $contents);
-        }
-
-        $zip->close();
-
-        // Create uploaded file from temp zip
-        $uploadedFile = new UploadedFile(
-            $tempZip,
-            $archiveName,
-            'application/zip',
-            null,
-            true
-        );
-
-        // Create attachment from the zip file
-        $archive = Attachment::fromFile($uploadedFile, $disk, $folder);
-
-        // Clean up temp file
-        @unlink($tempZip);
-
-        return $archive;
+        return $duplicated;
     }
 
     /**
@@ -176,16 +175,12 @@ class Attachments extends Collection
 
     /**
      * Get human-readable total size of all attachments.
+     *
+     * @param  int|null  $precision  Fixed decimal places; null trims the output
      */
-    public function totalReadableSize(): string
+    public function totalReadableSize(?int $precision = null): string
     {
-        $bytes = $this->totalSize();
-
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $power = $bytes > 0 ? floor(log($bytes, 1024)) : 0;
-        $index = (int) min($power, \count($units) - 1);
-
-        return number_format($bytes / pow(1024, $power), 2, '.', ',').' '.$units[$index];
+        return format_bytes($this->totalSize(), $precision);
     }
 
     /**

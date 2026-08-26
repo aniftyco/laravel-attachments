@@ -4,45 +4,14 @@ namespace NiftyCo\Attachments\Concerns;
 
 use Illuminate\Http\UploadedFile;
 use NiftyCo\Attachments\Attachment;
+
+use function NiftyCo\Attachments\attachment_casts;
+
 use NiftyCo\Attachments\Attachments;
 
 trait HasAttachments
 {
     use HasAttachmentCleanup;
-
-    /**
-     * Attach a file to the specified attribute.
-     */
-    public function attachFile(
-        string $attribute,
-        UploadedFile $file,
-        ?string $disk = null,
-        ?string $folder = null
-    ): static {
-        $attachment = Attachment::fromFile($file, $disk, $folder);
-
-        $this->setAttribute($attribute, $attachment);
-
-        return $this;
-    }
-
-    /**
-     * Attach multiple files to the specified attribute.
-     *
-     * @param  array<UploadedFile>  $files
-     */
-    public function attachFiles(
-        string $attribute,
-        array $files,
-        ?string $disk = null,
-        ?string $folder = null
-    ): static {
-        $attachments = Attachments::fromFiles($files, $disk, $folder);
-
-        $this->setAttribute($attribute, $attachments);
-
-        return $this;
-    }
 
     /**
      * Add a file to an existing collection of attachments.
@@ -104,20 +73,11 @@ trait HasAttachments
     /**
      * Get all attachment attributes for this model.
      *
-     * @return array<string>
+     * @return array<int, string>
      */
     public function getAttachmentAttributes(): array
     {
-        $casts = $this->getCasts();
-        $attachmentAttributes = [];
-
-        foreach ($casts as $attribute => $cast) {
-            if (str_contains($cast, 'AsAttachment') || str_contains($cast, 'AsAttachments')) {
-                $attachmentAttributes[] = $attribute;
-            }
-        }
-
-        return $attachmentAttributes;
+        return array_keys(attachment_casts($this->getCasts()));
     }
 
     /**
@@ -151,7 +111,7 @@ trait HasAttachments
             $value = $this->getAttribute($attribute);
 
             if ($value instanceof Attachment) {
-                $totalSize += $value->size ?? 0;
+                $totalSize += $value->size() ?? 0;
             }
 
             if ($value instanceof Attachments) {
