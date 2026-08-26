@@ -291,11 +291,12 @@ return [
     | Default Disk
     |--------------------------------------------------------------------------
     |
-    | The default filesystem disk to use for storing attachments.
-    | This should match one of the disks defined in config/filesystems.php
+    | The default filesystem disk to use for storing attachments. Should match
+    | one of the disks defined in config/filesystems.php. When left unset, it
+    | falls back to the framework's default disk (config('filesystems.default')).
     |
     */
-    'disk' => env('ATTACHMENTS_DISK', env('FILESYSTEM_DISK', 'public')),
+    'disk' => env('ATTACHMENTS_DISK'),
 
     /*
     |--------------------------------------------------------------------------

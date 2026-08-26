@@ -8,11 +8,13 @@ return [
     |
     | This option controls the default storage disk that will be used when
     | storing attachments. You can override this on a per-attachment basis
-    | by passing a disk parameter to the fromFile() method.
+    | by passing a disk parameter to the fromFile() method. When left unset,
+    | the package falls back to the framework's default filesystem disk
+    | (config('filesystems.default')), resolved at runtime.
     |
     */
 
-    'disk' => env('ATTACHMENTS_DISK', env('FILESYSTEM_DISK', 'public')),
+    'disk' => env('ATTACHMENTS_DISK'),
 
     /*
     |--------------------------------------------------------------------------

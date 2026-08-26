@@ -19,15 +19,17 @@ This creates `config/attachments.php` in your application.
 The default filesystem disk for storing attachments:
 
 ```php
-'disk' => env('ATTACHMENTS_DISK', env('FILESYSTEM_DISK', 'public')),
+'disk' => env('ATTACHMENTS_DISK'),
 ```
 
 **Environment Variable:**
 ```env
-ATTACHMENTS_DISK=public
+ATTACHMENTS_DISK=s3
 ```
 
-You can use any disk defined in `config/filesystems.php`:
+When left unset, the package falls back to the framework's default filesystem
+disk (`config('filesystems.default')`), resolved at runtime — so there is no
+hardcoded `public` default. You can use any disk defined in `config/filesystems.php`:
 - `local` - Local storage (not publicly accessible)
 - `public` - Public storage (accessible via URL)
 - `s3` - Amazon S3

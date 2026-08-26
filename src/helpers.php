@@ -5,6 +5,17 @@ namespace NiftyCo\Attachments;
 use NiftyCo\Attachments\Casts\AsAttachment;
 use NiftyCo\Attachments\Casts\AsAttachments;
 
+if (! function_exists('NiftyCo\Attachments\default_disk')) {
+    /**
+     * Resolve the default attachment disk, falling back to the framework's
+     * configured default filesystem when 'attachments.disk' is unset.
+     */
+    function default_disk(): string
+    {
+        return (string) (config('attachments.disk') ?? config('filesystems.default'));
+    }
+}
+
 if (! function_exists('NiftyCo\Attachments\format_bytes')) {
     /**
      * Format a byte count as a human-readable size (e.g. "1.5 MB").

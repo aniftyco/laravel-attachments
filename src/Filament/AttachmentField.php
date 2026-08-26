@@ -5,6 +5,8 @@ namespace NiftyCo\Attachments\Filament;
 use Filament\Forms\Components\FileUpload;
 use NiftyCo\Attachments\Attachment;
 
+use function NiftyCo\Attachments\default_disk;
+
 class AttachmentField extends FileUpload
 {
     /**
@@ -24,7 +26,7 @@ class AttachmentField extends FileUpload
     {
         $this->attachmentDisk = $disk;
 
-        return $this->disk($disk ?? config('attachments.disk'));
+        return $this->disk($disk ?? default_disk());
     }
 
     /**
@@ -43,7 +45,7 @@ class AttachmentField extends FileUpload
     public static function make(?string $name = null): static
     {
         return parent::make($name)
-            ->disk(config('attachments.disk'))
+            ->disk(default_disk())
             ->directory(config('attachments.folder'))
             ->dehydrateStateUsing(function ($state) {
                 if (! $state) {
@@ -58,7 +60,7 @@ class AttachmentField extends FileUpload
                     // Handle file path from upload
                     return Attachment::fromPath(
                         $state,
-                        config('attachments.disk')
+                        default_disk()
                     );
                 }
 
@@ -89,7 +91,7 @@ class AttachmentField extends FileUpload
 
                 foreach ($state as $item) {
                     if (\is_string($item)) {
-                        $item = Attachment::fromPath($item, config('attachments.disk'));
+                        $item = Attachment::fromPath($item, default_disk());
                     }
 
                     $items[] = $item;

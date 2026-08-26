@@ -14,7 +14,7 @@ php artisan vendor:publish --tag=attachments-config
 <?php
 
 return [
-    'disk' => env('ATTACHMENTS_DISK', env('FILESYSTEM_DISK', 'public')),
+    'disk' => env('ATTACHMENTS_DISK'),
     'folder' => env('ATTACHMENTS_FOLDER', 'attachments'),
     'auto_cleanup' => env('ATTACHMENTS_AUTO_CLEANUP', true),
     'delete_on_replace' => env('ATTACHMENTS_DELETE_ON_REPLACE', true),
@@ -27,11 +27,13 @@ return [
 
 ### `disk`
 
-**Type:** `string`  
-**Default:** `'public'`  
+**Type:** `string|null`  
+**Default:** `null` → falls back to `config('filesystems.default')`  
 **Environment Variable:** `ATTACHMENTS_DISK`
 
-The default filesystem disk for storing attachments.
+The default filesystem disk for storing attachments. When unset, the package
+resolves the framework's default filesystem disk at runtime — there is no
+hardcoded `public` default.
 
 **Valid Values:**
 - Any disk defined in `config/filesystems.php`
@@ -39,7 +41,7 @@ The default filesystem disk for storing attachments.
 
 **Example:**
 ```php
-'disk' => env('ATTACHMENTS_DISK', 'public'),
+'disk' => env('ATTACHMENTS_DISK'),
 ```
 
 **Environment:**

@@ -126,10 +126,12 @@ These macros automatically create nullable JSON columns.
 
 ## Configuring Storage
 
-By default, attachments are stored on the `public` disk in an `attachments` folder. You can customize this in your `.env` file:
+By default, attachments are stored on the framework's default filesystem disk
+(`config('filesystems.default')`) in an `attachments` folder. You can customize
+this in your `.env` file:
 
 ```env
-ATTACHMENTS_DISK=public
+ATTACHMENTS_DISK=s3
 ATTACHMENTS_FOLDER=attachments
 ```
 
@@ -138,7 +140,7 @@ Or in the published configuration file:
 ```php
 // config/attachments.php
 return [
-    'disk' => env('ATTACHMENTS_DISK', 'public'),
+    'disk' => env('ATTACHMENTS_DISK'),
     'folder' => env('ATTACHMENTS_FOLDER', 'attachments'),
     // ...
 ];

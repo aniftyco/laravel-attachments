@@ -30,7 +30,7 @@ class Attachment implements Jsonable, JsonSerializable
         ?string $folder = null
     ): static {
         // Use config defaults
-        $disk = $disk ?? config('attachments.disk');
+        $disk = $disk ?? default_disk();
         $folder = $folder ?? config('attachments.folder');
 
         try {
@@ -93,7 +93,7 @@ class Attachment implements Jsonable, JsonSerializable
         ?string $folder = null,
         ?string $mimeType = null
     ): static {
-        $disk = $disk ?? config('attachments.disk');
+        $disk = $disk ?? default_disk();
         $folder = $folder ?? config('attachments.folder');
 
         $extension = $filename !== null
@@ -162,7 +162,7 @@ class Attachment implements Jsonable, JsonSerializable
             throw StorageException::uploadFailed('The provided value is not a stream resource.');
         }
 
-        $disk = $disk ?? config('attachments.disk');
+        $disk = $disk ?? default_disk();
         $folder = $folder ?? config('attachments.folder');
 
         $extension = $filename !== null
@@ -227,7 +227,7 @@ class Attachment implements Jsonable, JsonSerializable
         ?string $folder = null,
         ?string $mimeType = null
     ): static {
-        $disk = $disk ?? config('attachments.disk');
+        $disk = $disk ?? default_disk();
         $folder = $folder ?? config('attachments.folder');
 
         $path = parse_url($url, PHP_URL_PATH);
@@ -298,7 +298,7 @@ class Attachment implements Jsonable, JsonSerializable
         string $path,
         ?string $disk = null
     ): static {
-        $disk = $disk ?? config('attachments.disk');
+        $disk = $disk ?? default_disk();
 
         if (! Storage::disk($disk)->exists($path)) {
             throw StorageException::fileNotFound($path);

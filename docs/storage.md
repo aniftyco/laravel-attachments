@@ -11,15 +11,18 @@ Set the default disk in your configuration:
 ```php
 // config/attachments.php
 return [
-    'disk' => env('ATTACHMENTS_DISK', 'public'),
+    'disk' => env('ATTACHMENTS_DISK'),
 ];
 ```
 
 Or in your `.env` file:
 
 ```env
-ATTACHMENTS_DISK=public
+ATTACHMENTS_DISK=s3
 ```
+
+When `ATTACHMENTS_DISK` is unset, attachments use the framework's default
+filesystem disk (`config('filesystems.default')`).
 
 ### Available Disks
 
