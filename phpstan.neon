@@ -1,0 +1,11 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 7
+    paths:
+        - src
+        - workbench/app
+    excludePaths:
+        # PHPUnit-assertion test-support trait; only analysable inside a TestCase.
+        - src/Testing
