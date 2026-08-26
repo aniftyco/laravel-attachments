@@ -26,7 +26,10 @@
   "autoload": {
     "psr-4": {
       "NiftyCo\\Attachments\\": "src/"
-    }
+    },
+    "files": [
+      "src/helpers.php"
+    ]
   },
   "require-dev": {
     "orchestra/testbench": "^11.0",
