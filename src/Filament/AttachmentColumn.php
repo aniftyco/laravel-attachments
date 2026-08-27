@@ -23,16 +23,18 @@ class AttachmentColumn extends TextColumn
     }
 
     /**
-     * Map an attachment to a Heroicon name based on its type.
+     * Map an attachment to a Heroicon name based on its category.
      */
     protected static function iconFor(Attachment $attachment): string
     {
-        return match (true) {
-            $attachment->isImage() => 'heroicon-o-photo',
-            $attachment->isPdf() => 'heroicon-o-document-text',
-            $attachment->isVideo() => 'heroicon-o-video-camera',
-            $attachment->isAudio() => 'heroicon-o-musical-note',
-            $attachment->isDocument() => 'heroicon-o-document',
+        return match ($attachment->type()) {
+            'image' => 'heroicon-o-photo',
+            'video' => 'heroicon-o-video-camera',
+            'audio' => 'heroicon-o-musical-note',
+            'pdf' => 'heroicon-o-document-text',
+            'archive' => 'heroicon-o-archive-box',
+            'document' => 'heroicon-o-document',
+            'text' => 'heroicon-o-document-text',
             default => 'heroicon-o-paper-clip',
         };
     }

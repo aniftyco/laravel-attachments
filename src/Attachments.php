@@ -184,21 +184,12 @@ class Attachments extends Collection
     }
 
     /**
-     * Filter attachments by file type.
+     * Filter attachments by category.
      *
-     * @param  string  $type  Type to filter by (image, pdf, video, audio, document)
+     * @param  string  $type  One of: image, video, audio, pdf, archive, document, text, other
      */
     public function ofType(string $type): static
     {
-        return $this->filter(function (Attachment $attachment) use ($type) {
-            return match ($type) {
-                'image' => $attachment->isImage(),
-                'pdf' => $attachment->isPdf(),
-                'video' => $attachment->isVideo(),
-                'audio' => $attachment->isAudio(),
-                'document' => $attachment->isDocument(),
-                default => false,
-            };
-        });
+        return $this->filter(fn (Attachment $attachment) => $attachment->type() === $type);
     }
 }

@@ -223,10 +223,10 @@ Response:
   "name": "John Doe",
   "avatar": {
     "url": "https://example.com/storage/avatars/abc123.jpg",
-    "name": "abc123.jpg",
-    "size": 153600,
     "mime": "image/jpeg",
-    "readable_size": "150 KB"
+    "size": 153600,
+    "extension": "jpg",
+    "type": "image"
   }
 }
 ```

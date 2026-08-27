@@ -488,12 +488,51 @@ Check if the file is an audio file.
 public function isAudio(): bool
 ```
 
+### `isArchive()`
+
+Check if the file is an archive (zip, tar, gzip, tgz, 7z, rar, bzip2, xz, and
+their compressed-tar variants).
+
+```php
+public function isArchive(): bool
+```
+
 ### `isDocument()`
 
-Check if the file is a document (PDF, Word, Excel, PowerPoint, text, or CSV).
+Check if the file is a document (PDF, Word, Excel, PowerPoint, OpenDocument, RTF,
+plain text, or CSV).
 
 ```php
 public function isDocument(): bool
+```
+
+### `isText()`
+
+Check if the file is text — any `text/*` type plus `application/json` and
+`application/xml`.
+
+```php
+public function isText(): bool
+```
+
+### `type()`
+
+Resolve the attachment's category — the single source of truth used by the
+`AttachmentResource` `type` field, the Filament column icon, and
+`Attachments::ofType()`. Returns one of `image`, `video`, `audio`, `pdf`,
+`archive`, `document`, `text`, or `other` (a null MIME type resolves to `other`).
+
+The ladder is evaluated in priority order, so `pdf` and `archive` win over the
+broader `document` bucket, and `document` wins over plain `text`:
+
+```php
+public function type(): string
+```
+
+**Example:**
+
+```php
+$attachment->type(); // e.g. "archive" for a .tar.gz, "pdf" for a PDF
 ```
 
 ## Serialization

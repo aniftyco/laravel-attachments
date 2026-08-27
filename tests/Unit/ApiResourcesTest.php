@@ -4,104 +4,48 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use NiftyCo\Attachments\Attachment;
 use NiftyCo\Attachments\Attachments;
-use NiftyCo\Attachments\Http\Resources\AttachmentCollection;
 use NiftyCo\Attachments\Http\Resources\AttachmentResource;
 
 beforeEach(function () {
     Storage::fake('public');
 });
 
-it('can transform attachment to resource', function () {
+it('transforms an attachment to the trimmed field set', function () {
     $file = UploadedFile::fake()->image('photo.jpg', 100, 100);
     $attachment = Attachment::fromFile($file, 'public', 'photos');
 
-    $resource = new AttachmentResource($attachment);
-    $array = $resource->toArray(request());
+    $array = (new AttachmentResource($attachment))->toArray(request());
 
-    expect($array)->toHaveKeys([
-        'path',
-        'url',
-        'size',
-        'readable_size',
-        'mime',
-        'extension',
-        'disk',
-        'folder',
-    ])
-        ->and($array['path'])->toContain('.jpg')
-        ->and($array['disk'])->toBe('public')
-        ->and($array['folder'])->toBe('photos')
-        ->and($array['extension'])->toBe('jpg');
+    expect(array_keys($array))->toBe(['url', 'mime', 'size', 'extension', 'type'])
+        ->and($array)->not->toHaveKeys(['readable_size', 'path', 'disk', 'folder'])
+        ->and($array['mime'])->toBe('image/jpeg')
+        ->and($array['extension'])->toBe('jpg')
+        ->and($array['type'])->toBe('image')
+        ->and($array['url'])->toContain('/storage/photos/')
+        ->and($array['url'])->toContain('.jpg');
 });
 
-it('includes file type in resource response', function () {
-    $file = UploadedFile::fake()->image('photo.jpg');
-    $attachment = Attachment::fromFile($file, 'public', 'photos');
-
-    $resource = new AttachmentResource($attachment);
-    $with = $resource->with(request());
-
-    expect($with)->toHaveKey('type')
-        ->and($with['type'])->toBe('image');
-});
-
-it('correctly identifies pdf type', function () {
+it('includes the type inside each attachment item', function () {
     $file = UploadedFile::fake()->create('document.pdf');
     $attachment = Attachment::fromFile($file, 'public', 'documents');
 
-    $resource = new AttachmentResource($attachment);
-    $with = $resource->with(request());
+    $array = (new AttachmentResource($attachment))->toArray(request());
 
-    expect($with['type'])->toBe('pdf');
+    expect($array)->toHaveKey('type')
+        ->and($array['type'])->toBe('pdf');
 });
 
-it('can transform attachment collection to resource', function () {
+it('transforms a collection of attachments via AttachmentResource::collection', function () {
     $attachments = new Attachments([
         Attachment::fromFile(UploadedFile::fake()->image('photo1.jpg'), 'public', 'photos'),
         Attachment::fromFile(UploadedFile::fake()->image('photo2.jpg'), 'public', 'photos'),
         Attachment::fromFile(UploadedFile::fake()->image('photo3.jpg'), 'public', 'photos'),
     ]);
 
-    $resource = new AttachmentCollection($attachments);
-    $array = $resource->toArray(request());
+    $data = AttachmentResource::collection($attachments)->resolve(request());
 
-    expect($array)->toHaveKeys(['data', 'meta'])
-        ->and($array['data'])->toHaveCount(3)
-        ->and($array['meta'])->toHaveKeys(['total', 'total_size', 'total_readable_size'])
-        ->and($array['meta']['total'])->toBe(3);
-});
-
-it('includes total size in collection meta', function () {
-    $attachments = new Attachments([
-        Attachment::fromFile(UploadedFile::fake()->create('file1.txt', 100), 'public', 'files'),
-        Attachment::fromFile(UploadedFile::fake()->create('file2.txt', 200), 'public', 'files'),
-    ]);
-
-    $resource = new AttachmentCollection($attachments);
-    $array = $resource->toArray(request());
-
-    expect($array['meta']['total_size'])->toBeGreaterThan(0)
-        ->and($array['meta']['total_readable_size'])->toBeString();
-});
-
-it('resource includes readable size', function () {
-    $file = UploadedFile::fake()->create('file.txt', 1024); // 1MB
-    $attachment = Attachment::fromFile($file, 'public', 'files');
-
-    $resource = new AttachmentResource($attachment);
-    $array = $resource->toArray(request());
-
-    expect($array['readable_size'])->toContain('MB');
-});
-
-it('resource includes url', function () {
-    $file = UploadedFile::fake()->image('photo.jpg');
-    $attachment = Attachment::fromFile($file, 'public', 'photos');
-
-    $resource = new AttachmentResource($attachment);
-    $array = $resource->toArray(request());
-
-    expect($array['url'])->toBeString()
-        ->and($array['url'])->toContain('/storage/photos/')
-        ->and($array['url'])->toContain('.jpg');
+    expect($data)->toHaveCount(3)
+        ->and(array_keys($data[0]))->toBe(['url', 'mime', 'size', 'extension', 'type'])
+        ->and($data[0]['type'])->toBe('image')
+        ->and($data[0]['url'])->toContain('.jpg');
 });

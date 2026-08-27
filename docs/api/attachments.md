@@ -251,7 +251,7 @@ echo $post->images->totalReadableSize(2); // "15.30 MB"
 
 ### `ofType()`
 
-Filter attachments by type.
+Filter attachments by category, using each attachment's `type()`.
 
 ```php
 public function ofType(string $type): static
@@ -259,16 +259,19 @@ public function ofType(string $type): static
 
 **Parameters:**
 
-- `$type` - Type to filter by: `'image'`, `'pdf'`, `'video'`, `'audio'`, `'document'`
+- `$type` - One of: `'image'`, `'video'`, `'audio'`, `'pdf'`, `'archive'`, `'document'`, `'text'`, `'other'`
 
 **Returns:** Filtered collection
+
+Note: `pdf` and `archive` are their own categories, so `ofType('document')`
+returns only true documents (Office/OpenDocument/RTF/text/CSV), not PDFs or archives.
 
 **Example:**
 
 ```php
 $images = $attachments->ofType('image');
 $pdfs = $attachments->ofType('pdf');
-$videos = $attachments->ofType('video');
+$archives = $attachments->ofType('archive');
 ```
 
 ## Standard Collection Methods

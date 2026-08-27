@@ -19,29 +19,27 @@ return $resource;
 ```json
 {
   "data": {
-    "path": "avatars/abc123.jpg",
     "url": "https://example.com/storage/avatars/abc123.jpg",
-    "size": 153600,
-    "readable_size": "150 KB",
     "mime": "image/jpeg",
+    "size": 153600,
     "extension": "jpg",
-    "disk": "public",
-    "folder": "avatars"
-  },
-  "type": "image"
+    "type": "image"
+  }
 }
 ```
 
-## AttachmentCollection
+Each attachment serializes to exactly these five fields: `url`, `mime`, `size`,
+`extension`, and `type`. The `type` field is the attachment's category, one of:
+`image`, `video`, `audio`, `pdf`, `archive`, `document`, `text`, or `other`.
 
-Transform multiple attachments:
+## Collections of Attachments
+
+Transform multiple attachments with Laravel's standard resource collection:
 
 ```php
-use NiftyCo\Attachments\Http\Resources\AttachmentCollection;
+use NiftyCo\Attachments\Http\Resources\AttachmentResource;
 
-$collection = new AttachmentCollection($post->images);
-
-return $collection;
+return AttachmentResource::collection($post->images);
 ```
 
 ### Response Format
@@ -50,22 +48,25 @@ return $collection;
 {
   "data": [
     {
-      "path": "posts/image1.jpg",
       "url": "https://example.com/storage/posts/image1.jpg",
-      "size": 204800,
       "mime": "image/jpeg",
-      "readable_size": "200 KB"
+      "size": 204800,
+      "extension": "jpg",
+      "type": "image"
     },
     {
-      "path": "posts/image2.jpg",
       "url": "https://example.com/storage/posts/image2.jpg",
-      "size": 307200,
       "mime": "image/jpeg",
-      "readable_size": "300 KB"
+      "size": 307200,
+      "extension": "jpg",
+      "type": "image"
     }
   ]
 }
 ```
+
+Need aggregate totals? They come straight from the collection:
+`$post->images->totalSize()` and `$post->images->totalReadableSize()`.
 
 ## Using in Model Resources
 
@@ -99,11 +100,11 @@ Response:
   "name": "John Doe",
   "email": "john@example.com",
   "avatar": {
-    "path": "avatars/abc123.jpg",
     "url": "https://example.com/storage/avatars/abc123.jpg",
-    "size": 153600,
     "mime": "image/jpeg",
-    "readable_size": "150 KB"
+    "size": 153600,
+    "extension": "jpg",
+    "type": "image"
   }
 }
 ```
@@ -114,7 +115,7 @@ Response:
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use NiftyCo\Attachments\Http\Resources\AttachmentCollection;
+use NiftyCo\Attachments\Http\Resources\AttachmentResource;
 
 class PostResource extends JsonResource
 {
@@ -124,7 +125,7 @@ class PostResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'content' => $this->content,
-            'images' => new AttachmentCollection($this->images),
+            'images' => AttachmentResource::collection($this->images),
         ];
     }
 }
@@ -137,17 +138,15 @@ Response:
   "id": 1,
   "title": "My Post",
   "content": "Post content...",
-  "images": {
-    "data": [
-      {
-        "path": "posts/image1.jpg",
-        "url": "https://example.com/storage/posts/image1.jpg",
-        "size": 204800,
-        "mime": "image/jpeg",
-        "readable_size": "200 KB"
-      }
-    ]
-  }
+  "images": [
+    {
+      "url": "https://example.com/storage/posts/image1.jpg",
+      "mime": "image/jpeg",
+      "size": 204800,
+      "extension": "jpg",
+      "type": "image"
+    }
+  ]
 }
 ```
 
@@ -250,7 +249,7 @@ Paginate attachment collections:
 namespace App\Http\Controllers;
 
 use App\Models\Attachment;
-use NiftyCo\Attachments\Http\Resources\AttachmentCollection;
+use NiftyCo\Attachments\Http\Resources\AttachmentResource;
 
 class AttachmentController extends Controller
 {
@@ -258,7 +257,7 @@ class AttachmentController extends Controller
     {
         $attachments = Attachment::paginate(15);
 
-        return new AttachmentCollection($attachments);
+        return AttachmentResource::collection($attachments);
     }
 }
 ```
@@ -309,7 +308,7 @@ class PostResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
-            'images' => new AttachmentCollection($this->images),
+            'images' => AttachmentResource::collection($this->images),
         ];
     }
 }

@@ -5,6 +5,32 @@ namespace NiftyCo\Attachments;
 use NiftyCo\Attachments\Casts\AsAttachment;
 use NiftyCo\Attachments\Casts\AsAttachments;
 
+if (! function_exists('NiftyCo\Attachments\extract_extension')) {
+    /**
+     * Derive a file extension from a filename, preserving known compound
+     * (double) extensions such as ".tar.gz" → "tar.gz". Returns null when the
+     * filename has no extension.
+     */
+    function extract_extension(string $filename): ?string
+    {
+        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+
+        if ($extension === '') {
+            return null;
+        }
+
+        $lower = strtolower($filename);
+
+        foreach (['tar.gz', 'tar.bz2', 'tar.xz'] as $compound) {
+            if (str_ends_with($lower, '.'.$compound)) {
+                return $compound;
+            }
+        }
+
+        return $extension;
+    }
+}
+
 if (! function_exists('NiftyCo\Attachments\default_disk')) {
     /**
      * Resolve the default attachment disk, falling back to the framework's

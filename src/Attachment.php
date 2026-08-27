@@ -96,9 +96,7 @@ class Attachment implements Jsonable, JsonSerializable
         $disk = $disk ?? default_disk();
         $folder = $folder ?? config('attachments.folder');
 
-        $extension = $filename !== null
-            ? (pathinfo($filename, PATHINFO_EXTENSION) ?: null)
-            : null;
+        $extension = $filename !== null ? extract_extension($filename) : null;
 
         if ($mimeType === null && $extension !== null) {
             $mimeType = MimeTypes::getDefault()->getMimeTypes($extension)[0] ?? null;
@@ -165,9 +163,7 @@ class Attachment implements Jsonable, JsonSerializable
         $disk = $disk ?? default_disk();
         $folder = $folder ?? config('attachments.folder');
 
-        $extension = $filename !== null
-            ? (pathinfo($filename, PATHINFO_EXTENSION) ?: null)
-            : null;
+        $extension = $filename !== null ? extract_extension($filename) : null;
 
         if ($mimeType === null && $extension !== null) {
             $mimeType = MimeTypes::getDefault()->getMimeTypes($extension)[0] ?? null;
@@ -233,7 +229,7 @@ class Attachment implements Jsonable, JsonSerializable
         $path = parse_url($url, PHP_URL_PATH);
         $filename = is_string($path) ? basename($path) : '';
         $filename = $filename !== '' ? $filename : null;
-        $extension = $filename !== null ? (pathinfo($filename, PATHINFO_EXTENSION) ?: null) : null;
+        $extension = $filename !== null ? extract_extension($filename) : null;
 
         try {
             $response = Http::withOptions(['stream' => true])->get($url);
@@ -307,7 +303,7 @@ class Attachment implements Jsonable, JsonSerializable
         try {
             $size = Storage::disk($disk)->size($path);
             $mimeType = Storage::disk($disk)->mimeType($path) ?: null;
-            $extension = pathinfo($path, PATHINFO_EXTENSION);
+            $extension = extract_extension($path);
 
             return new static(
                 disk: $disk,
