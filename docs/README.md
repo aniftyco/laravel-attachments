@@ -8,7 +8,6 @@ This directory contains comprehensive documentation for the Laravel Attachments 
 - **[index.md](index.md)** - Documentation home page with overview and quick links
 - **[installation.md](installation.md)** - Installation guide and initial setup
 - **[configuration.md](configuration.md)** - Complete configuration options reference
-- **[upgrade-guide.md](upgrade-guide.md)** - Guide for upgrading between versions
 
 ### Core Concepts
 - **[single-attachments.md](single-attachments.md)** - Working with single file attachments

@@ -77,7 +77,6 @@ echo $user->avatar->readableSize();
 
 - [Installation](installation.md)
 - [Configuration](configuration.md)
-- [Upgrade Guide](upgrade-guide.md)
 
 ### Core Concepts
 
